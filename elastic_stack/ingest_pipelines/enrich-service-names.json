@@ -1,0 +1,60 @@
+{
+ "processors": [
+  {
+   "script": {
+    "if": "ctx?.kubernetes?.container?.name != null || ctx?.kubernetes?.pod?.name != null",
+    "lang": "painless",
+    "params": {
+     "mappings": {
+      "advertservice": "advertService",
+      "cartservice": "cartService",
+      "checkoutservice": "checkoutService",
+      "currencyservice": "currencyService",
+      "emailservice": "emailService",
+      "frontend": "frontend",
+      "paymentservice": "paymentService",
+      "productcatalogservice": "productCatalogService",
+      "recommendationservice": "recommendationService",
+      "shippingservice": "shippingService"
+     }
+    },
+    "source": "def name = 'none'; if (ctx?.kubernetes?.container?.name != null) { name =  ctx.kubernetes.container.name; } else { name = ctx.kubernetes.pod.name.splitOnToken('-')[0]; }  if (params.mappings.containsKey(name) ) { ctx.service = [:];  ctx.service.name = params.mappings[name]; }"
+   }
+  },
+  {
+   "geoip": {
+    "field": "client.ip",
+    "ignore_missing": true,
+    "target_field": "client.geo"
+   }
+  },
+  {
+   "geoip": {
+    "field": "source.ip",
+    "ignore_missing": true,
+    "target_field": "source.geo"
+   }
+  },
+  {
+   "geoip": {
+    "field": "destination.ip",
+    "ignore_missing": true,
+    "target_field": "destination.geo"
+   }
+  },
+  {
+   "geoip": {
+    "field": "server.ip",
+    "ignore_missing": true,
+    "target_field": "server.geo"
+   }
+  },
+  {
+   "geoip": {
+    "field": "host.ip",
+    "ignore_missing": true,
+    "target_field": "host.geo"
+   }
+  }
+ ]
+}

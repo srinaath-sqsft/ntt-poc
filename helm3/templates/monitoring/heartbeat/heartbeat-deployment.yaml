@@ -1,0 +1,79 @@
+{{- $dot := . }}
+{{ range .Values.heartbeat }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heartbeat-{{ .name }}
+  namespace: {{ $dot.Chart.Name }}-{{ $dot.Values.username }}
+spec:
+  selector:
+    matchLabels:
+      k8s-app: heartbeat
+  template:
+    metadata:
+      labels:
+        k8s-app: heartbeat
+    spec:
+      {{- template "affinity" $dot }}
+      serviceAccountName: heartbeat-{{ $dot.Chart.Name }}-{{ $dot.Values.username }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: heartbeat
+        image: docker.elastic.co/beats/heartbeat:{{ $dot.Values.stack_version }}
+        imagePullPolicy: Always
+        resources:
+          limits:
+           cpu: 60m
+           memory: 100Mi
+          requests:
+           cpu: 5m
+           memory: 50Mi
+        args: [
+          "-c", "/etc/heartbeat.yml",
+          "-d", "autodiscover, docker",
+          "-e",
+          "-httpprof", "0.0.0.0:6060",
+        ]
+        env:
+        - name: ELASTICSEARCH_USERNAME
+          value: "admin"
+        - name: ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ $dot.Chart.Name }}-es-creds
+              key: ELASTICSEARCH_PASSWORD
+        - name: ELASTICSEARCH_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ $dot.Chart.Name }}-es-creds
+              key: ELASTICSEARCH_URL
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: config
+          mountPath: /etc/heartbeat.yml
+          readOnly: true
+          subPath: heartbeat.yml
+        - name: config
+          mountPath: /etc/ilm_policy.json
+          readOnly: true
+          subPath: ilm_policy.json
+        - name: dockersock
+          mountPath: /var/run
+      volumes:
+      - name: dockersock
+        hostPath:
+          path: /var/run
+      - name: config
+        configMap:
+          defaultMode: 0600
+          name: heartbeat-config-{{ .name }}
+      - name: data
+        emptyDir: {}
+{{- end }}

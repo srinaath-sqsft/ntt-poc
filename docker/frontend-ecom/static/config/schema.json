@@ -1,0 +1,5 @@
+{
+    "rating": "number",
+    "sale_price": "number",
+    "price": "number"
+}

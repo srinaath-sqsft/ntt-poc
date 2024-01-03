@@ -1,0 +1,71 @@
+{{- $dot := . }}
+{{ range .Values.heartbeat }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: heartbeat-config-{{.name}}
+  namespace: {{ $dot.Chart.Name }}-{{ $dot.Values.username }}
+  labels:
+    k8s-app: heartbeat
+data:
+  heartbeat.yml: |-
+    heartbeat.monitors:
+    - type: icmp
+      schedule: '*/10 * * * * * *'
+      name: GitHub
+      hosts: ["github.com"]
+    - type: http
+      schedule: '@every 10s'
+      name: GitHub
+      urls: ["https://github.com"]
+      check.response.status: 200
+    name: heartbeat
+    setup.dashboards.enabled: false
+    setup.template.overwrite: true
+    output.elasticsearch:
+      hosts: ['${ELASTICSEARCH_URL}']
+      username: ${ELASTICSEARCH_USERNAME}
+      password: ${ELASTICSEARCH_PASSWORD}
+      pipeline: enrich-service-names
+    processors:
+      - add_cloud_metadata:
+      - add_docker_metadata:
+      - add_kubernetes_metadata:
+          host: ${NODE_NAME}
+      - add_observer_metadata:
+          cache.ttl: 5m
+          geo:
+            name: {{.datacenter}}
+            location: {{.location}}
+    monitoring:
+      enabled: true
+      elasticsearch:
+        username: ${ELASTICSEARCH_USERNAME}
+        password: ${ELASTICSEARCH_PASSWORD}
+    setup.ilm.enabled: true
+    setup.ilm.policy_file: /etc/ilm_policy.json
+    setup.ilm.overwrite: true
+  ilm_policy.json: |-
+    {
+        "policy": {
+            "phases": {
+                "hot": {
+                    "min_age": "0ms",
+                    "actions": {
+                        "rollover": {
+                            "max_age": "6h",
+                            "max_size": "20gb"
+                        }
+                    }
+                },
+                "delete": {
+                    "min_age": "2d",
+                    "actions": {
+                        "delete": {}
+                    }
+                }
+            }
+        }
+    }
+{{- end }}

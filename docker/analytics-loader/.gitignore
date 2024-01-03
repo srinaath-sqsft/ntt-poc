@@ -1,0 +1,15 @@
+/baskets/
+/orders/
+/products/
+/sessions/
+/sold_products/
+/map_sold_products.py
+/map_sessions.py
+/map_orders.py
+/map_datasets.py
+/map_baskets.py
+/sku-mappings.txt
+/indexer.py
+/map_products.py
+/patch_timestamps.py
+/add_queries.py

@@ -1,0 +1,157 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: advertservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: advertservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: advertservice
+  template:
+    metadata:
+      labels:
+        app: advertservice
+        affinitylabel: {{ .Chart.Name }}-{{ .Values.username }}
+      annotations:
+        co.elastic.monitor/type: tcp
+        co.elastic.monitor/name: advertservice-{{ .Values.username }}
+        co.elastic.monitor/hosts: ${data.host}:10000
+        co.elastic.monitor/schedule: "@every 10s"
+        co.elastic.monitor/timeout: 1s
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.target: "service"
+        co.elastic.logs/processors.add_fields.fields.name: "advertService"
+        eden.core_infra: "true"
+    spec:
+      tolerations:
+        - key: "dummy-pod"
+          operator: "Exists"
+          effect: "NoSchedule"
+      nodeSelector:
+        node_type: unified
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: affinitylabel
+                    operator: In
+                    values:
+                      - resource-dummy-pod
+              topologyKey: kubernetes.io/hostname
+              namespaces:
+                - default
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      containers:
+      - name: advertservice
+        image: docker.elastic.co/sa/{{ .Chart.Name }}-adservice:{{ .Values.es_version }}-{{ .Values.build_num }}
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          tcpSocket:
+            port: 10000
+          initialDelaySeconds: 60
+          timeoutSeconds: 1
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 100
+            memory: 300Mi
+          requests:
+            cpu: 1m
+            memory: 1Mi
+        env:
+        #- name: ELASTIC_APM_SERVICE_NODE_NAME
+        #  value: "advertservice-pod"
+        - name: ELASTIC_APM_APPLICATION_PACKAGES
+          value: "gallivant"
+        - name: ELASTIC_APM_METRICS_INTERVAL
+          value: "10s"
+        - name: PORT
+          value: "10000"
+        - name: ELASTIC_APM_PROFILING_INFERRED_SPANS_ENABLED
+          value: "true"
+        - name: ELASTIC_APM_LOG_LEVEL
+          value: "INFO"
+        - name: ELASTIC_APM_SERVICE_VERSION
+          value: "1.7.2"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "advertService"
+        - name: ELASTIC_APM_ENABLE_LOG_CORRELATION
+          value: "true"
+        - name: MAX_ADS_TO_SERVE
+          value: "2"
+        - name: ENABLE_IMAGE_ENCODING
+          value: "true"
+        - name: ENABLE_CACHE
+          value: "false"
+        - name: ENABLE_CACHE_BOOST
+          value: "500"
+        - name: NETWORK_ERRORS
+          value: "true"
+        - name: SEARCH_TIMEOUT
+          value: "1000"
+        - name: ELASTIC_APM_SERVER_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_URL
+        - name: ELASTIC_APM_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_SECRET_TOKEN
+        - name: ELASTIC_APM_DISABLE_INSTRUMENTATIONS
+          value: "grpc"
+        - name: ELASTICSEARCH_USERNAME
+          value: "admin"
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
+        - name: ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-es-creds
+              key: ELASTICSEARCH_PASSWORD
+        - name: ELASTICSEARCH_URL
+          #value: "ad-elasticsearch:9200"
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-es-creds
+              key: ELASTICSEARCH_URL
+        - name: JAVA_OPTS
+          value: -Xms16m -Xmx256m -XX:+ExitOnOutOfMemoryError
+        - name: KUBERNETES_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBERNETES_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: KUBERNETES_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: advertservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: advertservice
+spec:
+  ports:
+  - port: 10000
+    targetPort: 10000
+  selector:
+    app: advertservice

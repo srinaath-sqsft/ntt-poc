@@ -1,0 +1,94 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-ecom-nginx
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: frontend-ecom-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-ecom-nginx
+  template:
+    metadata:
+      labels:
+        app: frontend-ecom-nginx
+      annotations:
+        eden.core_infra: "false"
+    spec:
+      {{- template "node-affinity" . }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      volumes:
+      - name: nginx-http-config
+        configMap:
+          defaultMode: 0777
+          name: nginx-http-config
+      containers:
+      - name: nginx-http
+        image: nginx
+        volumeMounts:
+        - name: nginx-http-config
+          mountPath: /etc/nginx/nginx.conf
+          readOnly: true
+          subPath: nginx.conf
+        env:
+        - name: DEPLOY_NUM
+          value: "{{ .Values.deploy_num }}"
+        resources:
+          limits:
+           cpu: 101m
+           memory: 100Mi
+          requests:
+           cpu: 10m
+           memory: 10Mi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-http-config
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+data:
+  nginx.conf: |-
+    events {}
+
+    http {
+      server {
+        listen       80;
+
+        location / {
+          proxy_pass   http://frontend-ecom-{{ .Values.deploy_num }}:80;
+        }
+
+        location /api {
+          proxy_pass   http://frontend-node-{{ .Values.deploy_num }}:3000;
+        }
+      }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-ecom-nginx-{{ .Values.deploy_num }}
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: frontend-ecom-nginx
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: frontend-ecom-nginx
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Chart.Name }}-{{ .Values.username }}-nginx
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: frontend-ecom-nginx-{{ .Values.deploy_num }}.{{ .Chart.Name }}-{{ .Values.username }}.svc.cluster.local
+  ports:
+  - port: 80

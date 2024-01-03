@@ -1,0 +1,94 @@
+{
+ "description": "Custom enrichment for APM events",
+ "processors": [
+  {
+   "set": {
+    "field": "client.ip",
+    "if": "ctx.labels?.ip != null",
+    "value": "{{labels.ip}}"
+   }
+  },
+  {
+   "set": {
+    "field": "charged",
+    "if": "ctx.labels?.charged != null",
+    "value": "{{labels.charged}}"
+   }
+  },
+  {
+   "set": {
+    "field": "amount",
+    "if": "ctx.labels?.amount != null",
+    "value": "{{labels.amount}}"
+   }
+  },
+  {
+   "convert": {
+    "field": "amount",
+    "if": "ctx.labels?.amount != null",
+    "target_field": "amount_f",
+    "type": "float"
+   }
+  },
+  {
+   "set": {
+    "field": "currency_code",
+    "if": "ctx.labels?.currency_code != null",
+    "value": "{{labels.currency_code}}"
+   }
+  },
+  {
+   "set": {
+    "field": "user_agent.original",
+    "if": "ctx.labels?.user_agent != null",
+    "value": "{{labels.user_agent}}"
+   }
+  },
+  {
+   "set": {
+    "field": "event.outcome",
+    "if": "ctx.labels?.outcome != null",
+    "override": true,
+    "value": "{{labels.outcome}}"
+   }
+  },
+  {
+   "script": {
+    "if": "ctx.transaction?.duration?.us != null \u0026\u0026 ctx?.service?.name != null \u0026\u0026 ctx.processor.name == 'transaction';",
+    "lang": "painless",
+    "params": {
+     "targets": {
+      "advertService": 100000,
+      "cartService": 100000,
+      "checkoutService": 1100000,
+      "currencyService": 24000,
+      "emailService": 50000,
+      "frontend": 680000,
+      "paymentService": 50000,
+      "productCatalogService": 5000,
+      "recommendationService": 70000,
+      "shippingService": 5000
+     }
+    },
+    "source": "if (params.targets.containsKey(ctx.service.name)){ ctx.duration_sla = params.targets[ctx.service.name];} if (ctx.service.name == 'advertService') { ctx.duration_sla_pct = Math.round( ctx.transaction.duration.us/params.targets[ctx.service.name] * 100.0) / 100.0; } else { ctx.duration_sla_pct = new Random().nextGaussian() * 0.4 + 0.3; } "
+   }
+  },
+  {
+   "rename": {
+    "field": "_metadata.metadata_event_dataset",
+    "ignore_failure": true,
+    "target_field": "event.dataset"
+   }
+  },
+  {
+   "pipeline": {
+    "name": "apm_user_agent"
+   }
+  },
+  {
+   "pipeline": {
+    "name": "apm_user_geo"
+   }
+  }
+ ]
+}

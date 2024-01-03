@@ -1,0 +1,8 @@
+{
+  "source": {
+    "index": "reindex_apm-custom-link"
+  },
+  "dest": {
+    "index": ".apm-custom-link"
+  }
+}

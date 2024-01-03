@@ -1,0 +1,39 @@
+{
+ "chunking_config": {
+  "mode": "auto"
+ },
+ "datafeed_id": "datafeed-rare-log-messages",
+ "delayed_data_check_config": {
+  "enabled": true
+ },
+ "indices": [
+  "filebeat-*"
+ ],
+ "indices_options": {
+  "allow_no_indices": true,
+  "expand_wildcards": [
+   "open"
+  ],
+  "ignore_throttled": true,
+  "ignore_unavailable": false
+ },
+ "job_id": "rare-log-messages",
+ "query": {
+  "bool": {
+   "filter": [
+    {
+     "exists": {
+      "field": "message"
+     }
+    },
+    {
+     "term": {
+      "service.name": "advertService"
+     }
+    }
+   ]
+  }
+ },
+ "query_delay": "108173ms",
+ "scroll_size": 10000
+}

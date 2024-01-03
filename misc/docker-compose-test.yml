@@ -1,0 +1,50 @@
+#This is for test and development purposes. A useful compose to build services in isolation for testing
+version: '3.7'
+services:
+
+  frontend:
+    image: frontend:${ES_VERSION:-7.4.0}
+    build:
+      context: ../docker/frontend
+    container_name: frontend
+    networks:
+      observe-net:
+        aliases:
+          - frontend
+    ports:
+      - "8080:8080"
+    environment:
+      - ELASTIC_APM_SECRET_TOKEN=${ELASTIC_APM_SECRET_TOKEN}
+      - ELASTIC_APM_SERVICE_VERSION=1.1
+      - ELASTIC_APM_SERVER_URLS=${ELASTIC_APM_SERVER_URL}
+      - ELASTIC_APM_SERVICE_NAME=frontend
+      - PORT=8080
+      - AD_SERVICE_ADDR=adservice:10000
+      - CURRENCY_SERVICE_ADDR=currencyservice:6000
+      - CART_SERVICE_ADDR=cartservice:11000
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:9000
+      - SHIPPING_SERVICE_ADDR=shippingservice:7000
+      - RECOMMENDATION_SERVICE_ADDR=recommendationservice:3000
+      - CHECKOUT_SERVICE_ADDR=checkoutservice:8000
+
+  adservice:
+    image: adservice:${ES_VERSION:-7.4.0}
+    build:
+      context: ../docker/adservice
+    container_name: adservice
+    networks:
+      observe-net:
+        aliases:
+          - adservice
+    ports:
+      - "10000:10000"
+    environment:
+      - ELASTIC_APM_SECRET_TOKEN=${ELASTIC_APM_SECRET_TOKEN}
+      - ELASTIC_APM_SERVICE_VERSION=1.1
+      - ELASTIC_APM_SERVER_URLS=${ELASTIC_APM_SERVER_URL}
+      - ELASTIC_APM_SERVICE_NAME=adService
+      - PORT=10000
+
+networks:
+  observe-net:
+    driver: bridge

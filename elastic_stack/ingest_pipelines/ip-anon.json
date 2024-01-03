@@ -1,0 +1,35 @@
+{
+ "description": "Pipeline to anonimise and geo enrich ips",
+ "processors": [
+  {
+   "script": {
+    "ignore_failure": true,
+    "lang": "painless",
+    "params": {
+     "base_seed": 14,
+     "field": "source.ip",
+     "target_field": "source.ip"
+    },
+    "source": "if (ctx['source']['ip'] != null) { long seed = 0; if (ctx['source']['ip'].contains(':')) { ctx['source'].remove('ip'); } else { StringTokenizer st = new StringTokenizer(ctx['source']['ip'], '.'); int uniq = 0; int c = 0;  while (st.hasMoreElements()) { uniq = uniq | ((Integer.parseInt(st.nextElement())) \u003c\u003c ((3-c)*8)); c+=1; }  seed = uniq*params.base_seed;  Random gen = new Random(seed); ctx['source']['ip']='' + (gen.nextInt(255)+1)+'.'+(gen.nextInt(255)+1)+'.'+(gen.nextInt(255)+1)+'.'+(gen.nextInt(255)+1); } }"
+   }
+  },
+  {
+   "script": {
+    "ignore_failure": true,
+    "lang": "painless",
+    "params": {
+     "base_seed": 14,
+     "field": "client.ip",
+     "target_field": "client.ip"
+    },
+    "source": "if (ctx['client']['ip'] != null) { long seed = 0; if (ctx['client']['ip'].contains(':')) { ctx['client'].remove('ip'); } else { StringTokenizer st = new StringTokenizer(ctx['client']['ip'], '.'); int uniq = 0; int c = 0;  while (st.hasMoreElements()) { uniq = uniq | ((Integer.parseInt(st.nextElement())) \u003c\u003c ((3-c)*8)); c+=1; }  seed = uniq*params.base_seed;  Random gen = new Random(seed); ctx['client']['ip']='' + (gen.nextInt(255)+1)+'.'+(gen.nextInt(255)+1)+'.'+(gen.nextInt(255)+1)+'.'+(gen.nextInt(255)+1); } }"
+   }
+  },
+  {
+   "set": {
+    "field": "anonymized",
+    "value": "true"
+   }
+  }
+ ]
+}

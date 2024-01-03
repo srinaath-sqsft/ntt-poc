@@ -1,0 +1,161 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metricbeat-daemonset-config
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    k8s-app: metricbeat
+data:
+  metricbeat.yml: |-
+    metricbeat.config.modules:
+      # Mounted `metricbeat-daemonset-modules` configmap:
+      path: ${path.config}/modules.d/*.yml
+      # Reload module configs as they change:
+      reload.enabled: false
+    metricbeat.autodiscover:
+      providers:
+        - type: kubernetes
+          node: ${NODE_NAME}
+          hints.enabled: true
+    processors:
+      - add_cloud_metadata:
+      - add_docker_metadata:
+      - add_kubernetes_metadata:
+          in_cluster: true
+      - add_host_metadata:
+      - drop_fields:
+          fields:
+            - 'kubernetes.labels'
+            - 'kubernetes.pod._module.labels.app'
+            - 'kubernetes.container._module.labels.app'
+      - drop_event:
+          when:
+            and:
+            - not:
+                equals:
+                  kubernetes.namespace: {{ .Chart.Name }}-{{ .Values.username }}
+            - not:
+                equals:
+                  event.module: system
+            - not:
+                equals:
+                  event.module: elasticsearch
+            - not:
+                equals:
+                  event.module: enterprisesearch
+    setup.ilm.enabled: true
+    #setup.ilm.policy_file: /etc/ilm_policy.json
+    #setup.ilm.overwrite: true
+    output.elasticsearch:
+      hosts: ['${ELASTICSEARCH_URL}']
+      username: ${ELASTICSEARCH_USERNAME}
+      password: ${ELASTICSEARCH_PASSWORD}
+      pipeline: enrich-service-names
+  ilm_policy.json: |-
+    {
+        "policy": {
+            "phases": {
+                "hot": {
+                    "min_age": "0ms",
+                    "actions": {
+                        "rollover": {
+                            "max_age": "6h",
+                            "max_size": "10gb"
+                        }
+                    }
+                },
+                "delete": {
+                    "min_age": "2d",
+                    "actions": {
+                        "delete": {}
+                    }
+                }
+            }
+        }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metricbeat-daemonset-modules
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    k8s-app: metricbeat
+data:
+  kube-state.yml: |-
+    - module: kubernetes
+      metricsets:
+        - state_node
+        - state_deployment
+        - state_replicaset
+        - state_pod
+        - state_container
+        - event
+      period: 10s
+      host: ${NODE_NAME}
+      hosts: ["kube-state-metrics:8080"]
+  system.yml: |-
+    - module: system
+      period: 10s
+      metricsets:
+        - cpu
+        - load
+        - memory
+        - network
+        - process
+        - process_summary
+        - core
+        #- diskio
+        - socket
+      processes: ['.*']
+      process.include_top_n:
+        by_cpu: 10      # include top 5 processes by CPU
+        by_memory: 10   # include top 5 processes by memory
+    - module: system
+      period: 1m
+      metricsets:
+        - filesystem
+        - fsstat
+      processors:
+      - drop_event.when.regexp:
+          system.filesystem.mount_point: '^/(sys|cgroup|proc|dev|etc|host|lib)($|/)'
+  kubernetes.yml: |-
+    - module: kubernetes
+      metricsets:
+        - node
+        - system
+        - pod
+        - container
+        - volume
+      period: 10s
+      host: ${NODE_NAME}
+      hosts: ["localhost:10255"]
+      add_metadata: true
+    - module: kubernetes
+      metricsets:
+        - proxy
+      period: 10s
+      host: ${NODE_NAME}
+      hosts: ["localhost:10249"]
+  elasticsearch-xpack.yml: |-
+    - module: elasticsearch
+      xpack.enabled: true
+      period: 10s
+      hosts: ['${ELASTICSEARCH_URL}']
+      scope: cluster
+      username: ${ELASTICSEARCH_USERNAME}
+      password: ${ELASTICSEARCH_PASSWORD}
+      ssl.enabled: true
+      #ssl.certificate_authorities: ["/etc/pki/root/ca.pem"]
+      #ssl.certificate: "/etc/pki/client/cert.pem"
+      #ssl.key: "/etc/pki/client/cert.key"
+      #ssl.verification_mode: "full"
+  entsearch.yml: |-
+    - module: enterprisesearch
+      metricsets: ["health", "stats"]
+      enabled: true
+      period: 10s
+      hosts: ["${ENTSEARCH_URL}"]
+      username: ${ELASTICSEARCH_USERNAME}
+      password: ${ELASTICSEARCH_PASSWORD}

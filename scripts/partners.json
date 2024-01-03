@@ -1,0 +1,64 @@
+{
+  "scripts": [
+    {
+      "id": "unified-demo",
+      "title": "Unified Demo",
+      "tags": [
+        "microservices",
+        "hipster",
+        "ecommerce",
+        "redis",
+        "synthetics",
+        "metricbeat",
+        "heartbeat"
+      ],
+      "products": [
+        "kibana",
+        "logs",
+        "metrics",
+        "machine learning",
+        "apm",
+        "app search"
+      ],
+      "solutions": [
+        "observability",
+        "enterprise search",
+        "security"
+      ],
+      "description": "A unified demo that can be used to demonstrate all Elastic Solutions within a single environment.",
+      "urls": [
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-ecom.partners.eden.elastic.dev",
+          "label": "Frontend UI - Gallivant Store"
+        },
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-reverse.partners.eden.elastic.dev/app/enterprise_search/app_search/engines/ecommerce",
+          "label": "App Search Admin"
+        },
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-workplace.partners.eden.elastic.dev/ws/search/",
+          "label": "Workplace Search"
+        },
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-reverse.partners.eden.elastic.dev/app/apm/service-map?rangeFrom=now-15m&rangeTo=now",
+          "label": "Kibana - APM Service Map"
+        },
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-reverse.partners.eden.elastic.dev/app/security/rules",
+          "label": "Kibana - Security Rules"
+        }
+      ],
+      "script": "https://drive.google.com/file/d/148NicWxAV1KxFikGTdtqyLubVjlyUiQM/view",
+      "thumbnail_image": "https://storage.googleapis.com/sa-eden-prod/images/unified-ecom/gallery.png",
+      "images": [],
+      "maintainer": "Luca Wintergerst, Lionel Palacin",
+      "version": "8.11",
+      "deployable": true,
+      "tier_1": true,
+      "distributable": "Yes",
+      "promoted": 10,
+      "queue_size": 1,
+      "featured": true
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simimservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: simimservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simimservice
+  template:
+    metadata:
+      labels:
+        app: simimservice
+      annotations:
+        co.elastic.monitor/type: tcp
+        co.elastic.monitor/name: simimservice-{{ .Values.username }}
+        co.elastic.monitor/hosts: ${data.host}:5001
+        co.elastic.monitor/schedule: "@every 10s"
+        co.elastic.monitor/timeout: 1s
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.target: "service"
+        co.elastic.logs/processors.add_fields.fields.name: "simimservice"
+        eden.core_infra: "true"
+    spec:
+      {{- template "affinity" . }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      containers:
+      - name: simimservice
+        image: docker.elastic.co/sa/{{ .Chart.Name }}-similar-image-service:0.0.1
+        #      docker.elastic.co/sa/unified-ecom-similar-image-service:0.0.1
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          tcpSocket:
+            port: 5001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          limits:
+           cpu: 100m
+           memory: 60Mi
+          requests:
+           cpu: 10m
+           memory: 30Mi
+        env:
+        - name: ES_HOST
+          value: "https://66992cfbea1a4cb497962f742d290a4b.europe-west1.gcp.cloud.es.io:9243"
+        - name: ES_USER
+          value: "admin"
+        - name: ES_PWD
+          value: "KoCumMuGJFpcTxzBg0INK5SF"
+        w
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simimservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: simimservice
+spec:
+  ports:
+  - port: 5001
+    targetPort: 5001
+  selector:
+    app: simimservice

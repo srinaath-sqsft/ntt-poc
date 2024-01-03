@@ -1,0 +1,3 @@
+{
+  "indices": ".ent*,.siem-signals*,.ds*,.siem-signals-static,-ilm*,reindex*"
+}

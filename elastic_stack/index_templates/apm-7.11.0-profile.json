@@ -1,0 +1,16 @@
+{
+ "aliases": {},
+ "index_patterns": [
+  "apm-7.11.0-profile*"
+ ],
+ "mappings": {},
+ "order": 2,
+ "settings": {
+  "index": {
+   "lifecycle": {
+    "name": "apm-rollover-30-days",
+    "rollover_alias": "apm-7.11.0-profile"
+   }
+  }
+ }
+}

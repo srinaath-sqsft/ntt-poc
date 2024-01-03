@@ -1,0 +1,70 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  annotations:
+    security.alpha.kubernetes.io/unsafe-sysctls: net.core.somaxconn=65535
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+      annotations:
+        co.elastic.monitor.redis-master/type: tcp
+        co.elastic.monitor.redis-master/name: redis
+        co.elastic.monitor.redis-master/hosts: ${data.host}:6379
+        co.elastic.monitor.redis-master/schedule: "@every 10s"
+        co.elastic.monitor.redis-master/timeout: 1s
+        co.elastic.metrics.redis-exporter/module: prometheus
+        co.elastic.metrics.redis-exporter/metricsets: collector
+        co.elastic.metrics.redis-exporter/period: 10s
+        co.elastic.metrics.redis-exporter/hosts: '${data.host}:9121'
+        co.elastic.metrics.redis-master/raw: "{ \"module\": \"redis\",  \"hosts\": [\"${data.host}:6379\"] , \"period\": \"10s\", \"metricsets\": [ \"info\", \"keyspace\" ], \"key.patterns\": [{ \"pattern\": \"*\" }] }"
+        co.elastic.logs.redis-master/module: redis
+        co.elastic.logs.redis-master/enabled: "true"
+    spec:
+      {{- template "affinity" . }}
+      containers:
+      - name: redis-master
+        image: redis:5.0.5
+        resources:
+          limits:
+           cpu: 100m
+           memory: 40Mi
+          requests:
+           cpu: 5m
+           memory: 20Mi
+        ports:
+        - containerPort: 6379
+        command:
+        - redis-server
+        - "/usr/local/etc/redis/redis.conf"
+        volumeMounts:
+        - name: config
+          mountPath: /usr/local/etc/redis/redis.conf
+          readOnly: true
+          subPath: redis.conf
+      - name: redis-exporter
+        image: oliver006/redis_exporter:v0.28.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+           cpu: 100m
+           memory: 40Mi
+          requests:
+           cpu: 5m
+           memory: 20Mi
+        env:
+          - name: REDIS_ADDR
+            value: redis://localhost:6379
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 0600
+          name: redis-config

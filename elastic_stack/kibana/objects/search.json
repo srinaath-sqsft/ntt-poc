@@ -1,0 +1,46 @@
+{
+  "objects": [
+   {
+    "attributes": {
+     "columns": [
+      "labels.userId",
+      "url.path",
+      "transaction.duration.us"
+     ],
+     "description": "",
+     "grid": {},
+     "hideChart": false,
+     "isTextBasedQuery": false,
+     "kibanaSavedObjectMeta": {
+      "searchSourceJSON": "{\"query\":{\"query\":\"url.path: * \",\"language\":\"kuery\"},\"filter\":[],\"indexRefName\":\"kibanaSavedObjectMeta.searchSourceJSON.index\"}"
+     },
+     "sort": [
+      [
+       "@timestamp",
+       "desc"
+      ]
+     ],
+     "title": "Complete user journey"
+    },
+    "coreMigrationVersion": "8.4.0",
+    "id": "c8f37430-34d5-11ed-8b3b-5d0381fc5f0f",
+    "migrationVersion": {
+     "search": "8.0.0"
+    },
+    "references": [
+     {
+      "id": "cb38ef62-955a-4a78-9b84-8f795f3e0242",
+      "name": "kibanaSavedObjectMeta.searchSourceJSON.index",
+      "type": "index-pattern"
+     }
+    ],
+    "sort": [
+     1663232832251,
+     1234
+    ],
+    "type": "search",
+    "updated_at": "2022-09-15T09:07:12.251Z",
+    "version": "Wzk0MTksMV0="
+   }
+  ]
+ }

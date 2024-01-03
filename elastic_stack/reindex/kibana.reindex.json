@@ -1,0 +1,8 @@
+{
+  "source": {
+    "index": "reindex-kb-7.15.0"
+  },
+  "dest": {
+    "index": ".kibana"
+  }
+}

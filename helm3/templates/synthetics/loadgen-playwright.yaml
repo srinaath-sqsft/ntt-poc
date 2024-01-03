@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen-playwright
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: loadgen-playwright
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loadgen-playwright
+  template:
+    metadata:
+      labels:
+        app: loadgen-playwright
+      annotations:
+        eden.core_infra: "false"
+    spec:
+      {{- template "affinity" . }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      containers:
+      - name: loadgen-playwright
+        image: docker.elastic.co/sa/{{ .Chart.Name }}-loadgen-playwright:{{ .Values.es_version }}-{{ .Values.build_num }}
+        imagePullPolicy: IfNotPresent
+        #command: ["node"]
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do node --unhandled-rejections=strict /etc/task.js; done;" ]
+        #args: ["/etc/task.js"]
+        resources:
+          limits:
+           cpu: 500m
+           memory: 1000Mi
+          requests:
+           cpu: 400m
+           memory: 401Mi
+        env:
+        - name: URL
+          value: http://frontend-ecom-nginx-{{ .Values.deploy_num }}
+        - name: DOMAIN
+          value: http://frontend-ecom-nginx-{{ .Values.deploy_num }}:80
+        - name: IPRANGE
+          value: "1"
+        - name: LATENCY
+          value: "400"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/task.js
+          readOnly: true
+          subPath: task.js
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 0777
+          name: loadgenerator-config-playwright
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  loadgenerator-config-playwright
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    k8s-app: loadgenerator
+data:
+{{- (.Files.Glob "files/loadgen-playwright/*").AsConfig | nindent 4 }}

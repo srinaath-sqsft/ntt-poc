@@ -1,0 +1,83 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendationservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: recommendationservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: recommendationservice
+  template:
+    metadata:
+      labels:
+        app: recommendationservice
+      annotations:
+        co.elastic.monitor/type: tcp
+        co.elastic.monitor/name: recommendationservice-{{ .Values.username }}
+        co.elastic.monitor/hosts: ${data.host}:3000
+        co.elastic.monitor/schedule: "@every 10s"
+        co.elastic.monitor/timeout: 1s
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.target: "service"
+        co.elastic.logs/processors.add_fields.fields.name: "recommendationService"
+        eden.core_infra: "true"
+    spec:
+      {{- template "affinity" . }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      containers:
+      - name: recommendationservice
+        image: docker.elastic.co/sa/{{ .Chart.Name }}-recommendationservice:{{ .Values.es_version }}-{{ .Values.build_num }}
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          tcpSocket:
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          limits:
+           cpu: 100m
+           memory: 100Mi
+          requests:
+           cpu: 10m
+           memory: 60Mi
+        env:
+        - name: PORT
+          value: "3000"
+        - name: ELASTIC_APM_SERVICE_VERSION
+          value: "1.6"
+        - name: PRODUCT_CATALOG_SERVICE_ADDR
+          value: "productcatalogservice:9000"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "recommendationService"
+        - name: ELASTIC_APM_SERVER_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_URL
+        - name: ELASTIC_APM_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_SECRET_TOKEN
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommendationservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: recommendationservice
+spec:
+  ports:
+  - port: 3000
+    targetPort: 3000
+  selector:
+    app: recommendationservice

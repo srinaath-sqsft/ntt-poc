@@ -1,0 +1,57 @@
+{
+    "description" : "Time shifts data by X for a field Y",
+    "processors" : [
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """
+          if (ctx[params.field] != null) {
+            def formatter = DateTimeFormatter.ofPattern(params.date_format).withZone(ZoneOffset.UTC);
+            def current_time = ZonedDateTime.parse(ctx[params.field], formatter);
+            current_time = current_time.plusSeconds(params.time_shift_seconds);
+            ctx[params.field] = current_time.format(formatter);
+          }
+
+          ctx['monitor']['check_group'] = ctx['monitor']['check_group'] + "_1"
+          """,
+          "params" : {
+            "field" : "@timestamp",
+            "time_shift_seconds" : -28800,
+            "date_format" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+          }
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """if (
+            ctx['monitor']['timespan']['lt']!= null) {
+              def formatter = DateTimeFormatter.ofPattern(params.date_format).withZone(ZoneOffset.UTC);
+              def current_time = ZonedDateTime.parse(ctx['monitor']['timespan']['lt'], formatter);
+              current_time = current_time.plusSeconds(params.time_shift_seconds);
+              ctx['monitor']['timespan']['lt'] = current_time.format(formatter);
+            }""",
+          "params" : {
+            "time_shift_seconds" : -28800,
+            "date_format" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+          }
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "source" : """if (
+            ctx['monitor']['timespan']['gte']!= null) {
+              def formatter = DateTimeFormatter.ofPattern(params.date_format).withZone(ZoneOffset.UTC);
+              def current_time = ZonedDateTime.parse(ctx['monitor']['timespan']['gte'], formatter);
+              current_time = current_time.plusSeconds(params.time_shift_seconds);
+              ctx['monitor']['timespan']['gte'] = current_time.format(formatter);
+            }""",
+          "params" : {
+            "time_shift_seconds" : -28800,
+            "date_format" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+          }
+        }
+      }
+    ]
+  }

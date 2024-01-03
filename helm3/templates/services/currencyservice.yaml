@@ -1,0 +1,81 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: currencyservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: currencyservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: currencyservice
+  template:
+    metadata:
+      labels:
+        app: currencyservice
+      annotations:
+        co.elastic.monitor/type: tcp
+        co.elastic.monitor/name: currencyservice-{{ .Values.username }}
+        co.elastic.monitor/hosts: ${data.host}:6000
+        co.elastic.monitor/schedule: "@every 10s"
+        co.elastic.monitor/timeout: 1s
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.target: "service"
+        co.elastic.logs/processors.add_fields.fields.name: "currencyService"
+        eden.core_infra: "true"
+    spec:
+      {{- template "affinity" . }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      containers:
+      - name: currencyservice
+        image: docker.elastic.co/sa/{{ .Chart.Name }}-currencyservice:{{ .Values.es_version }}-{{ .Values.build_num }}
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          tcpSocket:
+            port: 6000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          limits:
+           cpu: 200m
+           memory: 200Mi
+          requests:
+           cpu: 10m
+           memory: 40Mi
+        env:
+        - name: PORT
+          value: "6000"
+        - name: ELASTIC_APM_SERVICE_VERSION
+          value: "1.6"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "currencyService"
+        - name: ELASTIC_APM_SERVER_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_URL
+        - name: ELASTIC_APM_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_SECRET_TOKEN
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: currencyservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: currencyservice
+spec:
+  ports:
+  - port: 6000
+    targetPort: 6000
+  selector:
+    app: currencyservice

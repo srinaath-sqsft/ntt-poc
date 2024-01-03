@@ -1,0 +1,202 @@
+{
+  "metadata": {
+   "system_owned": false
+  },
+  "name": "",
+  "resources": {
+   "apm": [
+    {
+     "elasticsearch_cluster_ref_id": "main-elasticsearch",
+     "plan": {
+      "apm": {
+       "user_settings_yaml": "# Note that the syntax for user settings can change between major versions.\n# You might need to update these user settings before performing a major version upgrade.\n#\n# To learn more, see the documentation.\n\napm-server:\n  ilm:\n    enabled: true\n    setup:\n      enabled: true\n      overwrite: false\n      require_policy: true\n      mapping:\n        - event_type: \"error\"\n          policy_name: \"apm-rollover-30-days\"\n          index_suffix: \"\"\n        - event_type: \"span\"\n          policy_name: \"apm-rollover-30-days\"\n          index_suffix: \"\"\n        - event_type: \"transaction\"\n          policy_name: \"apm-rollover-30-days\"\n          index_suffix: \"\"\n        - event_type: \"metric\"\n          policy_name: \"apm-rollover-30-days\"\n          index_suffix: \"\"\n      policies:\n      - name: \"apm-all-policy\"\n        policy:\n          phases:\n          hot:\n            actions:\n              rollover:\n                max_size: \"10gb\"\n                max_age: \"1d\"\n                set_priority:\n                        priority: 100\n              delete:\n                min_age: \"14d\"\n                actions:\n                delete: {}\n\noutput.elasticsearch:\n  pipelines:\n  - pipeline: \"apm_custom\"\n  \n  ",
+       "version": "7.13.0"
+      },
+      "cluster_topology": [
+       {
+        "instance_configuration_id": "gcp.apm.1",
+        "size": {
+         "resource": "memory",
+         "value": 1024
+        },
+        "zone_count": 1
+       }
+      ],
+      "transient": {}
+     },
+     "ref_id": "main-apm",
+     "region": ""
+    }
+   ],
+   "elasticsearch": [
+    {
+     "plan": {
+      "cluster_topology": [
+       {
+        "elasticsearch": {
+         "enabled_built_in_plugins": [],
+         "user_settings_yaml": ""
+        },
+        "instance_configuration_id": "gcp.coordinating.1",
+        "node_type": {
+         "data": false,
+         "ingest": true,
+         "master": false,
+         "ml": false
+        },
+        "size": {
+         "resource": "memory",
+         "value": 0
+        },
+        "zone_count": 0
+       },
+       {
+        "elasticsearch": {
+         "enabled_built_in_plugins": [],
+         "user_settings_yaml": ""
+        },
+        "instance_configuration_id": "gcp.data.highio.1",
+        "node_type": {
+         "data": true,
+         "ingest": true,
+         "master": true,
+         "ml": false
+        },
+        "size": {
+         "resource": "memory",
+         "value": 2048
+        },
+        "zone_count": 2
+       },
+       {
+        "elasticsearch": {
+         "enabled_built_in_plugins": [],
+         "user_settings_yaml": ""
+        },
+        "instance_configuration_id": "gcp.data.highstorage.1",
+        "node_type": {
+         "data": true,
+         "ingest": false,
+         "master": false,
+         "ml": false
+        },
+        "size": {
+         "resource": "memory",
+         "value": 0
+        },
+        "zone_count": 2
+       },
+       {
+        "elasticsearch": {
+         "enabled_built_in_plugins": [],
+         "user_settings_yaml": ""
+        },
+        "instance_configuration_id": "gcp.data.highstorage.1",
+        "node_type": {
+         "data": true,
+         "ingest": false,
+         "master": false,
+         "ml": false
+        },
+        "size": {
+         "resource": "memory",
+         "value": 0
+        },
+        "zone_count": 1
+       },
+       {
+        "elasticsearch": {
+         "enabled_built_in_plugins": [],
+         "user_settings_yaml": ""
+        },
+        "instance_configuration_id": "gcp.master.1",
+        "node_type": {
+         "data": false,
+         "ingest": false,
+         "master": true,
+         "ml": false
+        },
+        "size": {
+         "resource": "memory",
+         "value": 0
+        },
+        "zone_count": 0
+       },
+       {
+        "elasticsearch": {
+         "enabled_built_in_plugins": [],
+         "user_settings_yaml": ""
+        },
+        "instance_configuration_id": "gcp.ml.1",
+        "node_type": {
+         "data": false,
+         "ingest": false,
+         "master": false,
+         "ml": true
+        },
+        "size": {
+         "resource": "memory",
+         "value": 1024
+        },
+        "zone_count": 1
+       },
+       {
+        "elasticsearch": {
+         "enabled_built_in_plugins": [],
+         "user_settings_yaml": ""
+        },
+        "instance_configuration_id": "gcp.data.highstorage.1",
+        "node_type": {
+         "data": true,
+         "ingest": false,
+         "master": false,
+         "ml": false
+        },
+        "size": {
+         "resource": "memory",
+         "value": 0
+        },
+        "zone_count": 1
+       }
+      ],
+      "deployment_template": {
+       "id": "gcp-io-optimized"
+      },
+      "elasticsearch": {
+       "version": "7.13.0"
+      },
+      "transient": {}
+     },
+     "ref_id": "main-elasticsearch",
+     "region": "",
+     "settings": {
+      "dedicated_masters_threshold": 6
+     }
+    }
+   ],
+   "kibana": [
+    {
+     "elasticsearch_cluster_ref_id": "main-elasticsearch",
+     "plan": {
+      "cluster_topology": [
+       {
+        "instance_configuration_id": "gcp.kibana.1",
+        "size": {
+         "resource": "memory",
+         "value": 1024
+        },
+        "zone_count": 1
+       }
+      ],
+      "kibana": {
+       "user_settings_yaml": "",
+       "version": "7.13.0"
+      },
+      "transient": {}
+     },
+     "ref_id": "main-kibana",
+     "region": ""
+    }
+   ]
+  }
+ }

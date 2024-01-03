@@ -1,0 +1,127 @@
+# Workaround: https://github.com/helm/helm/issues/3684#issuecomment-427932707
+{{- $dot := . }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: demo-ready
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: demo-ready
+      annotations:
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.fields.name: "demo-ready"
+        eden.core_infra: "true"
+    spec:
+      {{- template "affinity" . }}
+      restartPolicy: Never
+      volumes:
+      - name: demo-ready-config
+        configMap:
+          defaultMode: 0777
+          name: demo-ready-config
+      containers:
+      - name: demo-ready
+        image: docker.elastic.co/demos/elastic_utils:7.7.0
+        command: ['sh', '-c','/etc/demo-ready.sh']
+        volumeMounts:
+        - name: demo-ready-config
+          mountPath: /etc/demo-ready.sh
+          readOnly: true
+          subPath: demo-ready.sh
+        env:
+        - name: ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Chart.Name }}-es-creds
+              key: ELASTICSEARCH_PASSWORD
+        - name: ELASTICSEARCH_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Chart.Name }}-es-creds
+              key: ELASTICSEARCH_URL
+        - name: KIBANA_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Chart.Name }}-kibana-creds
+              key: KIBANA_URL
+        - name: ENVIRONMENT
+          value: {{ .Values.environment }}
+        - name: DEPLOY_NUM
+          value: "{{ .Values.deploy_num }}"
+      restartPolicy: Never
+  backoffLimit: 0
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-ready-config
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+data:
+  demo-ready.sh: |-
+      count=0
+      MAX_ATTEMPTS=300
+      echo "Add ads data"
+      curl -s -u "elastic:${ELASTICSEARCH_PASSWORD}" -XPOST "${ELASTICSEARCH_URL}/ads/_doc/1" -H 'Content-Type: application/json' -d'{"url":"/products/women/Skirt/AN621BA0NK11","text":"Pleated skirt for sale. 30% off.","category":["vintage"],"image":""}'
+      curl -s -u "elastic:${ELASTICSEARCH_PASSWORD}" -XPOST "${ELASTICSEARCH_URL}/ads/_doc/2" -H 'Content-Type: application/json' -d'{"url":"/products/men/Shirt/PI922PA16C11","text":"Polo shirt for sale. 10% off.","category":["cookware"],"image":""}'
+
+      echo "Load prepackaged rules"
+      curl -s -u "elastic:${ELASTICSEARCH_PASSWORD}" -XPUT "${KIBANA_URL}/api/detection_engine/rules/prepackaged" -H 'Content-Type: application/json' -H 'kbn-xsrf:kibana'
+
+      echo "Load Development credit card rule"
+      curl -s -u "elastic:${ELASTICSEARCH_PASSWORD}" -XPOST "${KIBANA_URL}/api/detection_engine/rules" -H 'Content-Type: application/json' -H 'kbn-xsrf:kibana' -d'{"type":"query","index":["traces-apm*"],"filters":[],"language":"kuery","query":"url.query:*340000000000009*","author":[],"exceptions_list":[],"false_positives":[],"references":[],"risk_score":90,"risk_score_mapping":[],"severity":"critical","severity_mapping":[],"threat":[],"note":"Development payment details were used in production! This should never happen!\n\nPlease check Workplace Search if any details have been leaked in GitHub or other tools we use!","license":"","name":"Development Credit Card Used","description":"Development payment details were used in production! This should never happen!","tags":["APM"],"interval":"5m","from":"now-360s","to":"now","actions":[],"enabled":false,"throttle":"no_actions","max_signals":100}'
+
+      until $(curl -o /dev/null -f -s -S -XGET "http://frontend-ecom-${DEPLOY_NUM}"); do
+        echo retrying...;
+        sleep 5;
+        count=`expr $count + 1`;
+        if [ $count -gt $MAX_ATTEMPTS ]; then
+          echo "Max Attempts reached"
+          exit 1
+        fi
+      done
+
+      echo "Checking Data is ready"
+      while [ $count -lt $MAX_ATTEMPTS ]; do
+          num_docs_apm=$(curl -s -u "elastic:${ELASTICSEARCH_PASSWORD}" -XPOST "${ELASTICSEARCH_URL}/metrics-apm*/_count" -H 'Content-Type: application/json' -d'{"query":{"range":{"@timestamp":{"gte":"now-2m"}}}}' | jq '.count')
+          num_docs_metricbeat=$(curl -s -u "elastic:${ELASTICSEARCH_PASSWORD}" -XPOST "${ELASTICSEARCH_URL}/metricbeat-*/_count" -H 'Content-Type: application/json' -d'{"query":{"range":{"@timestamp":{"gte":"now-2m"}}}}' | jq '.count')
+          num_docs_heartbeat=$(curl -s -u "elastic:${ELASTICSEARCH_PASSWORD}" -XPOST "${ELASTICSEARCH_URL}/heartbeat-*/_count" -H 'Content-Type: application/json' -d'{"query":{"range":{"@timestamp":{"gte":"now-2m"}}}}' | jq '.count')
+
+          if [ $num_docs_apm -gt 0 ] && [ $num_docs_metricbeat -gt 0 ] && [ $num_docs_heartbeat -gt 0 ]; then
+              echo "Data ready"
+              echo "Testing proxy endpoint https://unified-ecom-${DEPLOY_NUM}-reverse.${ENVIRONMENT}.eden.elastic.dev"
+              until curl -k -s --fail https://unified-ecom-${DEPLOY_NUM}-reverse.${ENVIRONMENT}.eden.elastic.dev > /dev/null
+              do
+                  if [ $count -eq $MAX_ATTEMPTS ]; then
+                      echo "Max Attempts reached"
+                      exit 1
+                  fi
+                  echo "Proxy entry not ready. Retrying..."
+                  count=`expr $count + 1`;
+                  sleep 5
+              done
+              echo "Proxy entry ready"
+              echo "Waiting for all pods to be ready"
+              sleep 30
+              echo "Done"
+              exit 0
+          fi
+          if [ $num_docs_apm -eq 0 ]; then
+              echo "apm data missing"
+          fi
+          if [ $num_docs_metricbeat -eq 0 ]; then
+              echo "metricbeat data missing"
+          fi
+          if [ $num_docs_heartbeat -eq 0 ]; then
+              echo "heartbeat data missing"
+          fi
+          echo retrying...;
+          sleep 5;
+          count=`expr $count + 1`;
+      done
+      echo "Max Attempts reached"
+      exit 1

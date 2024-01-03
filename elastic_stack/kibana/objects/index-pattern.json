@@ -1,0 +1,54 @@
+{
+  "objects": [
+   {
+    "attributes": {
+     "fieldAttrs": "{}",
+     "fields": "[]",
+     "name": "services",
+     "runtimeFieldMap": "{}",
+     "sourceFilters": "[]",
+     "title": "services",
+     "typeMeta": "{}"
+    },
+    "coreMigrationVersion": "8.4.0",
+    "id": "a94c6109-dcfe-4245-9fdb-16cf3a142983",
+    "migrationVersion": {
+     "index-pattern": "8.0.0"
+    },
+    "references": [],
+    "sort": [
+     1663064368278,
+     1151
+    ],
+    "type": "index-pattern",
+    "updated_at": "2022-09-13T10:19:28.278Z",
+    "version": "WzEyMjIsMV0="
+   },
+   {
+    "attributes": {
+     "fieldAttrs": "{\"transaction.duration.us\":{\"count\":1},\"labels.userId\":{\"count\":1},\"url.path\":{\"count\":1}}",
+     "fieldFormatMap": "{\"transaction.duration.us\":{\"id\":\"duration\",\"params\":{\"parsedUrl\":{\"origin\":\"https://unified-ecom-16-reverse.prod-3.eden.elastic.dev\",\"pathname\":\"/app/management\",\"basePath\":\"\"},\"inputFormat\":\"microseconds\",\"outputFormat\":\"humanizePrecise\",\"outputPrecision\":0,\"includeSpaceWithSuffix\":true}}}",
+     "fields": "[]",
+     "name": "apm",
+     "runtimeFieldMap": "{}",
+     "sourceFilters": "[]",
+     "timeFieldName": "@timestamp",
+     "title": "traces-apm*,apm-*",
+     "typeMeta": "{}"
+    },
+    "coreMigrationVersion": "8.4.0",
+    "id": "cb38ef62-955a-4a78-9b84-8f795f3e0242",
+    "migrationVersion": {
+     "index-pattern": "8.0.0"
+    },
+    "references": [],
+    "sort": [
+     1663243564557,
+     1269
+    ],
+    "type": "index-pattern",
+    "updated_at": "2022-09-15T12:06:04.557Z",
+    "version": "WzE3NDY5LDFd"
+   }
+  ]
+ }

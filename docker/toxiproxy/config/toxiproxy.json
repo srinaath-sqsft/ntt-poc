@@ -1,0 +1,14 @@
+[
+  {
+    "name": "google",
+    "listen": "[::]:18443",
+    "upstream": "google.com:443",
+    "enabled": true
+  },
+  {
+    "name": "web_dev_mysql_1",
+    "listen": "[::]:13306",
+    "upstream": "database.domain:3306",
+    "enabled": true
+  }
+]

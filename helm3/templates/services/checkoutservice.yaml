@@ -1,0 +1,95 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkoutservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: checkoutservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkoutservice
+  template:
+    metadata:
+      labels:
+        app: checkoutservice
+      annotations:
+        co.elastic.monitor/type: tcp
+        co.elastic.monitor/name: checkoutservice-{{ .Values.username }}
+        co.elastic.monitor/hosts: ${data.host}:8000
+        co.elastic.monitor/schedule: "@every 10s"
+        co.elastic.monitor/timeout: 1s
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.target: "service"
+        co.elastic.logs/processors.add_fields.fields.name: "checkoutService"
+        eden.core_infra: "true"
+    spec:
+      {{- template "affinity" . }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      containers:
+      - name: checkoutservice
+        image: docker.elastic.co/sa/{{ .Chart.Name }}-checkoutservice:{{ .Values.es_version }}-{{ .Values.build_num }}
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          tcpSocket:
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          limits:
+           cpu: 100m
+           memory: 60Mi
+          requests:
+           cpu: 10m
+           memory: 30Mi
+        env:
+        - name: PORT
+          value: "8000"
+        - name: ELASTIC_APM_SERVICE_VERSION
+          value: "1.6"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "checkoutService"
+        - name: CART_SERVICE_ADDR
+          value: "cartservice:11000"
+        - name: PRODUCT_CATALOG_SERVICE_ADDR
+          value: "productcatalogservice:9000"
+        - name: SHIPPING_SERVICE_ADDR
+          value: "shippingservice:7000"
+        - name: CURRENCY_SERVICE_ADDR
+          value: "currencyservice:6000"
+        - name: EMAIL_SERVICE_ADDR
+          value: "emailservice:4000"
+        #- name: PAYMENT_SERVICE_ADDR
+        #  value: "paymentservice-toxic:25000"
+        - name: PAYMENT_SERVICE_ADDR
+          value: "paymentservice:5000"
+        - name: ELASTIC_APM_SERVER_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_URL
+        - name: ELASTIC_APM_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_SECRET_TOKEN
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkoutservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: checkoutservice
+spec:
+  ports:
+  - port: 8000
+    targetPort: 8000
+  selector:
+    app: checkoutservice

@@ -1,0 +1,99 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Chart.Name }}-{{ .Values.username }}-frontend
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: frontend.{{ .Chart.Name }}-{{ .Values.username }}.svc.cluster.local
+  ports:
+  - port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}-{{ .Values.username }}-reverse-proxy
+  namespace: infra-services
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    eden.proxy: reverse
+    eden.proxy.reverse/vault.path: secret/k8s/eden/{{ .Values.environment }}/{{ .Chart.Name }}/{{ .Values.username }}/kibana
+    eden.proxy.reverse/vault.key: KIBANA_URL
+    eden.proxy.reverse/demo.name: {{ .Chart.Name }}
+    eden.proxy.reverse/basic.auth.vault.path: secret/k8s/eden/{{ .Values.environment }}/{{ .Chart.Name }}/{{ .Values.username }}/es
+    eden.proxy.reverse/basic.auth.user.name: elastic
+    eden.proxy.reverse/basic.auth.vault.key: ELASTICSEARCH_PASSWORD
+    nginx.ingress.kubernetes.io/auth-signin: "https://okta-proxy.{{ .Values.environment }}.eden.elastic.dev/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
+    nginx.ingress.kubernetes.io/auth-url: "https://okta-proxy.{{ .Values.environment }}.eden.elastic.dev/validate"
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-User
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      # these return values are used by the @error401 call
+      auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
+      auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
+      auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # set User request header
+      proxy_set_header X-Forwarded-User $authHeader0;
+    nginx.ingress.kubernetes.io/server-snippet: |
+      set $http_x_forwarded_demo_name unified-ecom;
+spec:
+  tls:
+  - hosts:
+    - {{ .Chart.Name }}-{{ .Values.deploy_num }}-reverse.{{ .Values.environment }}.eden.elastic.dev
+    secretName: wildcard-{{ .Values.environment }}-eden-elastic-dev
+  rules:
+  - host: {{ .Chart.Name }}-{{ .Values.deploy_num }}-reverse.{{ .Values.environment }}.eden.elastic.dev
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: reverse-proxy
+            port: 
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}-{{ .Values.username }}-workplace-proxy
+  namespace: infra-services
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    eden.proxy: reverse
+    eden.proxy.reverse/vault.path: secret/k8s/eden/{{ .Values.environment }}/{{ .Chart.Name }}/{{ .Values.username }}/entsearch
+    eden.proxy.reverse/vault.key: ENTSEARCH_URL
+    eden.proxy.reverse/demo.name: {{ .Chart.Name }}
+    eden.proxy.reverse/basic.auth.vault.path: secret/k8s/eden/{{ .Values.environment }}/{{ .Chart.Name }}/{{ .Values.username }}/es
+    eden.proxy.reverse/basic.auth.user.name: elastic
+    eden.proxy.reverse/basic.auth.vault.key: ELASTICSEARCH_PASSWORD
+    nginx.ingress.kubernetes.io/auth-signin: "https://okta-proxy.{{ .Values.environment }}.eden.elastic.dev/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
+    nginx.ingress.kubernetes.io/auth-url: "https://okta-proxy.{{ .Values.environment }}.eden.elastic.dev/validate"
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-User
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      # these return values are used by the @error401 call
+      auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
+      auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
+      auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # set User request header
+      proxy_set_header X-Forwarded-User $authHeader0;
+    nginx.ingress.kubernetes.io/server-snippet: |
+      set $http_x_forwarded_demo_name unified-ecom;
+spec:
+  tls:
+  - hosts:
+    - {{ .Chart.Name }}-{{ .Values.deploy_num }}-workplace.{{ .Values.environment }}.eden.elastic.dev
+    secretName: wildcard-{{ .Values.environment }}-eden-elastic-dev
+  rules:
+  - host: {{ .Chart.Name }}-{{ .Values.deploy_num }}-workplace.{{ .Values.environment }}.eden.elastic.dev
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: reverse-proxy
+            port: 
+              number: 80

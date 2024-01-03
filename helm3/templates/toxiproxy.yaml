@@ -1,0 +1,86 @@
+#---
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: toxiproxy
+#  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+#  labels:
+#    app: toxiproxy
+#spec:
+#  replicas: 1
+#  selector:
+#    matchLabels:
+#      app: toxiproxy
+#  template:
+#    metadata:
+#      labels:
+#        app: toxiproxy
+#      annotations:
+#        co.elastic.logs/enabled: "true"true
+#        co.elastic.logs/json.keys_under_root: "true"
+#        co.elastic.logs/processors.add_fields.target: "service"
+#        co.elastic.logs/processors.add_fields.fields.name: "toxiproxy"
+#        eden.core_infra: "true"
+#    spec:
+#      imagePullSecrets:
+#        - name: elastic-prod-registry
+#      containers:
+#      - name: toxiproxy
+#        image: docker.elastic.co/sa/{{ .Chart.Name }}-toxiproxy:{{ .Values.es_version }}-{{ .Values.build_num }}
+#        imagePullPolicy: IfNotPresent
+#        readinessProbe:
+#          tcpSocket:
+#            port: 8474
+#          initialDelaySeconds: 1
+#          periodSeconds: 5
+#        resources:
+#          limits:
+#           cpu: 500m
+#           memory: 500Mi
+#          requests:
+#           cpu: 25m
+#           memory: 100Mi
+#        env:
+#        - name: PLACEHOLDER
+#          value: "5000"
+#        volumeMounts:
+#        - name: toxiproxy-config
+#          mountPath: /go/bin/toxiproxy.json
+#          subPath: toxiproxy.json
+#      volumes:
+#      - name: toxiproxy-config
+#        configMap:
+#          defaultMode: 0755
+#          name: toxiproxy-config
+#---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: paymentservice-toxic
+#  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+#  labels:
+#    app: toxiproxy
+#spec:
+#  ports:
+#  - port: 25000
+#    targetPort: 25000
+#  selector:
+#    app: toxiproxy
+#---
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: toxiproxy-config
+#  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+#  labels:
+#    k8s-app: heartbeat
+#data:
+#  toxiproxy.json: |-
+#    [
+#      {
+#        "name": "paymentservice",
+#        "listen": "[::]:25000",
+#        "upstream": "paymentservice:5000",
+#        "enabled": true
+#      }
+#    ]

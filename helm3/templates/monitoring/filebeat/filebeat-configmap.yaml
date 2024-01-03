@@ -1,0 +1,74 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  filebeat-config
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    k8s-app: filebeat
+data:
+  filebeat.yml: |-
+    filebeat.autodiscover:
+      providers:
+        - type: kubernetes
+          templates:
+            - condition:
+                and:
+                  - contains:
+                      kubernetes.namespace: {{ .Chart.Name }}-{{ .Values.username }}
+          host: ${NODE_NAME}
+          hints.default_config:
+            type: container
+            paths:
+              - /var/log/containers/*${data.kubernetes.container.id}.log
+    setup.template.overwrite: true
+    filebeat.overwrite_pipelines: true
+
+    setup.ilm.enabled: true
+    setup.ilm.policy_file: /etc/ilm_policy.json
+    setup.ilm.overwrite: true
+    processors:
+      - drop_event:
+          when:
+            not:
+              equals:
+                kubernetes.namespace: {{ .Chart.Name }}-{{ .Values.username }}
+      - add_cloud_metadata:
+      - add_host_metadata:
+      - drop_fields:
+          fields: ["host.name", "_id", "_index", "_version"]
+          ignore_missing: true
+      - copy_fields:
+          fields:
+            - from: kubernetes.node.name
+              to: host.name
+          fail_on_error: false
+          ignore_missing: true
+    output.elasticsearch:
+      hosts: ['${ELASTICSEARCH_URL}']
+      username: ${ELASTICSEARCH_USERNAME}
+      pipeline: enrich-service-names
+      password: ${ELASTICSEARCH_PASSWORD}
+      worker: 1
+  ilm_policy.json: |-
+    {
+        "policy": {
+            "phases": {
+                "hot": {
+                    "min_age": "0ms",
+                    "actions": {
+                        "rollover": {
+                            "max_age": "6h",
+                            "max_size": "10gb"
+                        }
+                    }
+                },
+                "delete": {
+                    "min_age": "2d",
+                    "actions": {
+                        "delete": {}
+                    }
+                }
+            }
+        }
+    }

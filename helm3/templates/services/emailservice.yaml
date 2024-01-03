@@ -1,0 +1,179 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emailservice-1.8
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: emailservice
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: emailservice
+  template:
+    metadata:
+      labels:
+        app: emailservice
+      annotations:
+        co.elastic.monitor/type: tcp
+        co.elastic.monitor/name: emailservice-{{ .Values.username }}
+        co.elastic.monitor/hosts: ${data.host}:4000
+        co.elastic.monitor/schedule: "@every 10s"
+        co.elastic.monitor/timeout: 1s
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.target: "service"
+        co.elastic.logs/processors.add_fields.fields.name: "emailService"
+        eden.core_infra: "true"
+    spec:
+      {{- template "affinity" . }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      containers:
+      - name: emailservice
+        image: docker.elastic.co/sa/{{ .Chart.Name }}-emailservice:{{ .Values.es_version }}-{{ .Values.build_num }}
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          tcpSocket:
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          limits:
+           cpu: 100m
+           memory: 100Mi
+          requests:
+           cpu: 5m
+           memory: 40Mi
+        env:
+        - name: PORT
+          value: "4000"
+        - name: ELASTIC_APM_SERVICE_VERSION
+          value: "1.8"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "emailService"
+        - name: ELASTIC_APM_SERVER_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_URL
+        - name: ELASTIC_APM_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_SECRET_TOKEN
+        - name: MAILGUN_API_KEY
+          value: "placeHolder"
+        - name: TOGGLE
+          value: "false"
+        #  valueFrom:
+        #    secretKeyRef:
+        #      name: {{ .Chart.Name }}-mail-creds
+        #      key: key
+        - name: MAILGUN_DOMAIN
+          value: "sandbox369a71151cee41a68e61120bc679d182.mailgun.org"
+        - name: DUMMY_MODE
+          value: "true"
+        - name: FROM_EMAIL
+          value: "admin@sandbox369a71151cee41a68e61120bc679d182.mailgun.org"
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emailservice-1.9
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: emailservice
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: emailservice
+  template:
+    metadata:
+      labels:
+        app: emailservice
+      annotations:
+        co.elastic.monitor/type: tcp
+        co.elastic.monitor/name: emailservice-{{ .Values.username }}
+        co.elastic.monitor/hosts: ${data.host}:4000
+        co.elastic.monitor/schedule: "@every 10s"
+        co.elastic.monitor/timeout: 1s
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.target: "service"
+        co.elastic.logs/processors.add_fields.fields.name: "emailService"
+        eden.core_infra: "true"
+    spec:
+      {{- template "affinity" . }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      containers:
+      - name: emailservice
+        image: docker.elastic.co/sa/{{ .Chart.Name }}-emailservice:{{ .Values.es_version }}-{{ .Values.build_num }}
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          tcpSocket:
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          limits:
+           cpu: 10m
+           memory: 100Mi
+          requests:
+           cpu: 10m
+           memory: 40Mi
+        env:
+        - name: PORT
+          value: "4000"
+        - name: ELASTIC_APM_SERVICE_VERSION
+          value: "1.9"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "emailService"
+        - name: ELASTIC_APM_SERVER_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_URL
+        - name: ELASTIC_APM_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_SECRET_TOKEN
+        - name: MAILGUN_API_KEY
+          value: "placeHolder"
+        - name: TOGGLE
+          value: "false"
+        - name: TOGGLEALL
+          value: "false"
+        #  valueFrom:
+        #    secretKeyRef:
+        #      name: {{ .Chart.Name }}-mail-creds
+        #      key: key
+        - name: MAILGUN_DOMAIN
+          value: "sandbox369a71151cee41a68e61120bc679d182.mailgun.org"
+        - name: DUMMY_MODE
+          value: "true"
+        - name: FROM_EMAIL
+          value: "admin@sandbox369a71151cee41a68e61120bc679d182.mailgun.org"
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emailservice
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: emailservice
+spec:
+  clusterIP: 'None'
+  ports:
+  - port: 4000
+    targetPort: 4000
+  selector:
+    app: emailservice

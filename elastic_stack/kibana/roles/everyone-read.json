@@ -1,0 +1,25 @@
+{
+ "_transform_error": [],
+ "_unrecognized_applications": [],
+ "elasticsearch": {
+  "cluster": [],
+  "indices": [
+   {
+    "allow_restricted_indices": false,
+    "names": [
+     "*"
+    ],
+    "privileges": [
+     "read"
+    ]
+   }
+  ],
+  "run_as": []
+ },
+ "kibana": [],
+ "metadata": {},
+ "name": "everyone-read",
+ "transient_metadata": {
+  "enabled": true
+ }
+}

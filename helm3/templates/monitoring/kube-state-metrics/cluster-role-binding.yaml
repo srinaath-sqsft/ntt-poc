@@ -1,0 +1,17 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/version: v1.8.0
+  name: kube-state-metrics-{{ .Chart.Name }}-{{ .Values.username }}
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-state-metrics-{{ .Chart.Name }}-{{ .Values.username }}
+subjects:
+- kind: ServiceAccount
+  name: kube-state-metrics-{{ .Chart.Name }}-{{ .Values.username }}
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}

@@ -1,0 +1,68 @@
+{
+  "scripts": [
+    {
+      "id": "unified-demo",
+      "title": "Unified Demo",
+      "featured": true,
+      "tags": [
+        "microservices",
+        "hipster",
+        "ecommerce",
+        "redis",
+        "synthetics",
+        "metricbeat",
+        "heartbeat"
+      ],
+      "products": [
+        "kibana",
+        "logs",
+        "metrics",
+        "machine learning",
+        "apm",
+        "app search"
+      ],
+      "solutions": [
+        "observability",
+        "search",
+        "security"
+      ],
+      "description": "A unified demo that can be used to demonstrate all Elastic Solutions within a single environment.",
+      "urls": [
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-ecom.prod-3.eden.elastic.dev",
+          "label": "Frontend UI - Gallivant Store"
+        },
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-reverse.prod-3.eden.elastic.dev/app/enterprise_search/app_search/engines/ecommerce",
+          "label": "App Search Admin"
+        },
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-workplace.prod-3.eden.elastic.dev/ws/search/",
+          "label": "Workplace Search"
+        },
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-reverse.prod-3.eden.elastic.dev/app/apm/service-map?rangeFrom=now-15m&rangeTo=now",
+          "label": "Kibana - APM Service Map"
+        },
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-reverse.prod-3.eden.elastic.dev/app/security/rules",
+          "label": "Kibana - Security Rules"
+        },
+        {
+          "url": "https://unified-ecom-${BUILD_NUM}-reverse.prod-3.eden.elastic.dev/app/dashboards#/view/e834cbe0-1e29-11ed-b680-cdb66fdb3638?_g=(filters%3A!())",
+          "label": "Kibana - User Tracking"
+        }
+      ],
+      "script": "https://docs.google.com/presentation/d/1983uo4QgLr4IX0kF4YsC9d54oP5Ygf0Q4APjH_N1ofY/edit?usp=sharing",
+      "thumbnail_image": "https://storage.googleapis.com/sa-eden-prod/images/unified-ecom/gallery.png",
+      "images": [],
+      "maintainer": "Luca Wintergerst, Lionel Palacin",
+      "version": "8.11",
+      "deployable": true,
+      "tier_1": true,
+      "distributable": "Yes",
+      "promoted": 96,
+      "queue_size": 2
+    }
+  ]
+}

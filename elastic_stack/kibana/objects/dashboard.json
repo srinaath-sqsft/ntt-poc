@@ -1,0 +1,79 @@
+{
+  "objects": [
+   {
+    "attributes": {
+     "controlGroupInput": {
+      "chainingSystem": "HIERARCHICAL",
+      "controlStyle": "oneLine",
+      "ignoreParentSettingsJSON": "{\"ignoreFilters\":false,\"ignoreQuery\":false,\"ignoreTimerange\":false,\"ignoreValidations\":false}",
+      "panelsJSON": "{\"487954db-d242-4dfd-8d52-36d5d23301bc\":{\"order\":0,\"width\":\"medium\",\"grow\":true,\"type\":\"optionsListControl\",\"explicitInput\":{\"fieldName\":\"labels.userId\",\"title\":\"User\",\"id\":\"487954db-d242-4dfd-8d52-36d5d23301bc\",\"selectedOptions\":[],\"enhancements\":{}}}}"
+     },
+     "description": "",
+     "hits": 0,
+     "kibanaSavedObjectMeta": {
+      "searchSourceJSON": "{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[]}"
+     },
+     "optionsJSON": "{\"useMargins\":true,\"syncColors\":false,\"syncTooltips\":false,\"hidePanelTitles\":false}",
+     "panelsJSON": "[{\"version\":\"8.4.0\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":0,\"w\":48,\"h\":8,\"i\":\"9a5196eb-cc78-4266-973a-e19f5767897f\"},\"panelIndex\":\"9a5196eb-cc78-4266-973a-e19f5767897f\",\"embeddableConfig\":{\"savedVis\":{\"id\":\"\",\"title\":\"\",\"description\":\"\",\"type\":\"markdown\",\"params\":{\"fontSize\":12,\"openLinksInNewTab\":false,\"markdown\":\"# User tracking dashboard\\n\\nThis dashboard combines multiple views on the journey of one specific user.\\nIt is using a predefined set of services / pages that we expect a user to hit. To define the grey boxes we are using documents within the *services* Index. To define the color / state of each box we are using the *apm* Indices. \\n\\nClick through the application, filter for your username (elastic mail address) and see how this gets reflected in the dashboard.\"},\"uiState\":{},\"data\":{\"aggs\":[],\"searchSource\":{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[]}}},\"enhancements\":{}}},{\"version\":\"8.4.0\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":8,\"w\":24,\"h\":10,\"i\":\"73b8bb7f-4105-422e-825d-689e7562b8a9\"},\"panelIndex\":\"73b8bb7f-4105-422e-825d-689e7562b8a9\",\"embeddableConfig\":{\"enhancements\":{}},\"panelRefName\":\"panel_73b8bb7f-4105-422e-825d-689e7562b8a9\"},{\"version\":\"8.4.0\",\"type\":\"lens\",\"gridData\":{\"x\":24,\"y\":8,\"w\":24,\"h\":22,\"i\":\"cfa8ab51-b01a-49f7-acf0-d6c56147aae4\"},\"panelIndex\":\"cfa8ab51-b01a-49f7-acf0-d6c56147aae4\",\"embeddableConfig\":{\"attributes\":{\"title\":\"\",\"visualizationType\":\"lnsChoropleth\",\"type\":\"lens\",\"references\":[{\"type\":\"index-pattern\",\"id\":\"cb38ef62-955a-4a78-9b84-8f795f3e0242\",\"name\":\"indexpattern-datasource-layer-f2d087f4-d0b5-41f9-b4b2-24e2d4b70a51\"}],\"state\":{\"visualization\":{\"layerId\":\"f2d087f4-d0b5-41f9-b4b2-24e2d4b70a51\",\"layerType\":\"data\",\"regionAccessor\":\"38f6a85b-e966-4175-babb-368202721b02\",\"valueAccessor\":\"ea400c33-0f12-444e-8542-0c88a28a4108\"},\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filters\":[],\"datasourceStates\":{\"indexpattern\":{\"layers\":{\"f2d087f4-d0b5-41f9-b4b2-24e2d4b70a51\":{\"columns\":{\"38f6a85b-e966-4175-babb-368202721b02\":{\"label\":\"Top 5 values of client.geo.country_iso_code\",\"dataType\":\"string\",\"operationType\":\"terms\",\"scale\":\"ordinal\",\"sourceField\":\"client.geo.country_iso_code\",\"isBucketed\":true,\"params\":{\"size\":5,\"orderBy\":{\"type\":\"column\",\"columnId\":\"ea400c33-0f12-444e-8542-0c88a28a4108\"},\"orderDirection\":\"desc\",\"otherBucket\":true,\"missingBucket\":false,\"parentFormat\":{\"id\":\"terms\"}}},\"ea400c33-0f12-444e-8542-0c88a28a4108\":{\"label\":\"Avg duration\",\"dataType\":\"number\",\"operationType\":\"average\",\"sourceField\":\"transaction.duration.us\",\"isBucketed\":false,\"scale\":\"ratio\",\"filter\":{\"query\":\"transaction.duration.us: *\",\"language\":\"kuery\"},\"params\":{\"emptyAsNull\":true},\"customLabel\":true}},\"columnOrder\":[\"38f6a85b-e966-4175-babb-368202721b02\",\"ea400c33-0f12-444e-8542-0c88a28a4108\"],\"incompleteColumns\":{}}}}}}},\"enhancements\":{}}},{\"version\":\"8.4.0\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":18,\"w\":24,\"h\":12,\"i\":\"95575eb6-7aca-4d78-a1e4-6de651e8f1e0\"},\"panelIndex\":\"95575eb6-7aca-4d78-a1e4-6de651e8f1e0\",\"embeddableConfig\":{\"enhancements\":{}},\"panelRefName\":\"panel_95575eb6-7aca-4d78-a1e4-6de651e8f1e0\"},{\"version\":\"8.4.0\",\"type\":\"lens\",\"gridData\":{\"x\":0,\"y\":41,\"w\":48,\"h\":10,\"i\":\"734dcff2-5c15-488d-90c3-498873a192bc\"},\"panelIndex\":\"734dcff2-5c15-488d-90c3-498873a192bc\",\"embeddableConfig\":{\"attributes\":{\"title\":\"\",\"visualizationType\":\"lnsMetricNew\",\"type\":\"lens\",\"references\":[{\"type\":\"index-pattern\",\"id\":\"cb38ef62-955a-4a78-9b84-8f795f3e0242\",\"name\":\"indexpattern-datasource-layer-f75724ee-8550-41f0-93b0-4f88bfdc1524\"}],\"state\":{\"visualization\":{\"layerId\":\"f75724ee-8550-41f0-93b0-4f88bfdc1524\",\"layerType\":\"data\",\"metricAccessor\":\"3977fffe-9232-46f6-856e-2db12fe3cdee\",\"breakdownByAccessor\":\"f49b4e33-7158-4731-b43c-ad378f2eac47\",\"secondaryMetricAccessor\":\"93330d4c-43cf-4881-98c0-d5facd8e501c\",\"maxCols\":5,\"collapseFn\":\"\",\"palette\":{\"name\":\"custom\",\"type\":\"palette\",\"params\":{\"steps\":3,\"name\":\"custom\",\"reverse\":false,\"rangeType\":\"percent\",\"rangeMin\":null,\"rangeMax\":null,\"progression\":\"fixed\",\"stops\":[{\"color\":\"#209280\",\"stop\":50},{\"color\":\"#d6bf57\",\"stop\":60},{\"color\":\"#de9589\",\"stop\":80},{\"color\":\"#cc5642\",\"stop\":100}],\"colorStops\":[{\"color\":\"#209280\",\"stop\":null},{\"color\":\"#d6bf57\",\"stop\":50},{\"color\":\"#de9589\",\"stop\":60},{\"color\":\"#cc5642\",\"stop\":80}],\"continuity\":\"all\",\"maxSteps\":5}},\"secondaryPrefix\":\"Median duration\",\"progressDirection\":\"horizontal\"},\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filters\":[],\"datasourceStates\":{\"indexpattern\":{\"layers\":{\"f75724ee-8550-41f0-93b0-4f88bfdc1524\":{\"columns\":{\"f49b4e33-7158-4731-b43c-ad378f2eac47\":{\"label\":\"URL\",\"dataType\":\"string\",\"operationType\":\"terms\",\"scale\":\"ordinal\",\"sourceField\":\"url.path\",\"isBucketed\":true,\"params\":{\"size\":5,\"orderBy\":{\"type\":\"column\",\"columnId\":\"93330d4c-43cf-4881-98c0-d5facd8e501c\"},\"orderDirection\":\"desc\",\"otherBucket\":false,\"missingBucket\":false,\"parentFormat\":{\"id\":\"terms\"}},\"customLabel\":true},\"93330d4c-43cf-4881-98c0-d5facd8e501c\":{\"label\":\"Median\",\"dataType\":\"number\",\"operationType\":\"median\",\"sourceField\":\"transaction.duration.us\",\"isBucketed\":false,\"scale\":\"ratio\",\"params\":{\"emptyAsNull\":true},\"customLabel\":true},\"3977fffe-9232-46f6-856e-2db12fe3cdee\":{\"label\":\"Slowest duration\",\"dataType\":\"number\",\"operationType\":\"percentile\",\"sourceField\":\"transaction.duration.us\",\"isBucketed\":false,\"scale\":\"ratio\",\"params\":{\"percentile\":95},\"customLabel\":true}},\"columnOrder\":[\"f49b4e33-7158-4731-b43c-ad378f2eac47\",\"93330d4c-43cf-4881-98c0-d5facd8e501c\",\"3977fffe-9232-46f6-856e-2db12fe3cdee\"],\"incompleteColumns\":{}}}}}}},\"enhancements\":{}}},{\"version\":\"8.4.0\",\"type\":\"lens\",\"gridData\":{\"x\":0,\"y\":30,\"w\":48,\"h\":11,\"i\":\"98dd885e-1f9a-4c9f-9f4f-08e3aa0dc732\"},\"panelIndex\":\"98dd885e-1f9a-4c9f-9f4f-08e3aa0dc732\",\"embeddableConfig\":{\"attributes\":{\"title\":\"\",\"visualizationType\":\"lnsMetricNew\",\"type\":\"lens\",\"references\":[{\"type\":\"index-pattern\",\"id\":\"cb38ef62-955a-4a78-9b84-8f795f3e0242\",\"name\":\"indexpattern-datasource-layer-753be945-52ad-4714-8a8a-0342b851ed15\"}],\"state\":{\"visualization\":{\"layerId\":\"753be945-52ad-4714-8a8a-0342b851ed15\",\"layerType\":\"data\",\"metricAccessor\":\"86cf6171-bf99-4dbe-8e43-0f7402f2349a\",\"color\":\"#6092C0\",\"secondaryMetricAccessor\":\"c3ecdf5f-82a1-4c16-9fdb-cac2c36918ca\",\"secondaryPrefix\":\"TX\",\"breakdownByAccessor\":\"43da7646-9f6c-40b6-9596-aa976ee7d38a\",\"collapseFn\":\"\"},\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filters\":[],\"datasourceStates\":{\"indexpattern\":{\"layers\":{\"753be945-52ad-4714-8a8a-0342b851ed15\":{\"columns\":{\"86cf6171-bf99-4dbe-8e43-0f7402f2349a\":{\"label\":\"Traces\",\"dataType\":\"number\",\"operationType\":\"unique_count\",\"scale\":\"ratio\",\"sourceField\":\"trace.id\",\"isBucketed\":false,\"params\":{\"emptyAsNull\":true},\"customLabel\":true},\"c3ecdf5f-82a1-4c16-9fdb-cac2c36918ca\":{\"label\":\"Transactions\",\"dataType\":\"number\",\"operationType\":\"unique_count\",\"scale\":\"ratio\",\"sourceField\":\"transaction.id\",\"isBucketed\":false,\"params\":{\"emptyAsNull\":true},\"customLabel\":true},\"43da7646-9f6c-40b6-9596-aa976ee7d38a\":{\"label\":\"URL\",\"dataType\":\"string\",\"operationType\":\"terms\",\"scale\":\"ordinal\",\"sourceField\":\"url.path\",\"isBucketed\":true,\"params\":{\"size\":5,\"orderBy\":{\"type\":\"column\",\"columnId\":\"86cf6171-bf99-4dbe-8e43-0f7402f2349a\"},\"orderDirection\":\"desc\",\"otherBucket\":true,\"missingBucket\":false,\"parentFormat\":{\"id\":\"terms\"}},\"customLabel\":true}},\"columnOrder\":[\"43da7646-9f6c-40b6-9596-aa976ee7d38a\",\"86cf6171-bf99-4dbe-8e43-0f7402f2349a\",\"c3ecdf5f-82a1-4c16-9fdb-cac2c36918ca\"],\"incompleteColumns\":{}}}}}}},\"hidePanelTitles\":false,\"enhancements\":{}},\"title\":\"Top 5 requests\"},{\"version\":\"8.4.0\",\"type\":\"search\",\"gridData\":{\"x\":0,\"y\":51,\"w\":48,\"h\":15,\"i\":\"f327befe-2e73-4403-bc12-d398125820bb\"},\"panelIndex\":\"f327befe-2e73-4403-bc12-d398125820bb\",\"embeddableConfig\":{\"enhancements\":{}},\"panelRefName\":\"panel_f327befe-2e73-4403-bc12-d398125820bb\"}]",
+     "refreshInterval": {
+      "pause": false,
+      "value": 5000
+     },
+     "timeFrom": "now-5m",
+     "timeRestore": true,
+     "timeTo": "now",
+     "title": "User tracking dashboard",
+     "version": 1
+    },
+    "coreMigrationVersion": "8.4.0",
+    "id": "e834cbe0-1e29-11ed-b680-cdb66fdb3638",
+    "migrationVersion": {
+     "dashboard": "8.4.0"
+    },
+    "references": [
+     {
+      "id": "cbf73930-1e2a-11ed-b680-cdb66fdb3638",
+      "name": "73b8bb7f-4105-422e-825d-689e7562b8a9:panel_73b8bb7f-4105-422e-825d-689e7562b8a9",
+      "type": "visualization"
+     },
+     {
+      "id": "cb38ef62-955a-4a78-9b84-8f795f3e0242",
+      "name": "cfa8ab51-b01a-49f7-acf0-d6c56147aae4:indexpattern-datasource-layer-f2d087f4-d0b5-41f9-b4b2-24e2d4b70a51",
+      "type": "index-pattern"
+     },
+     {
+      "id": "f5b1cb60-1d5c-11ed-beaf-3173fdeba61f",
+      "name": "95575eb6-7aca-4d78-a1e4-6de651e8f1e0:panel_95575eb6-7aca-4d78-a1e4-6de651e8f1e0",
+      "type": "visualization"
+     },
+     {
+      "id": "cb38ef62-955a-4a78-9b84-8f795f3e0242",
+      "name": "734dcff2-5c15-488d-90c3-498873a192bc:indexpattern-datasource-layer-f75724ee-8550-41f0-93b0-4f88bfdc1524",
+      "type": "index-pattern"
+     },
+     {
+      "id": "cb38ef62-955a-4a78-9b84-8f795f3e0242",
+      "name": "98dd885e-1f9a-4c9f-9f4f-08e3aa0dc732:indexpattern-datasource-layer-753be945-52ad-4714-8a8a-0342b851ed15",
+      "type": "index-pattern"
+     },
+     {
+      "id": "c8f37430-34d5-11ed-8b3b-5d0381fc5f0f",
+      "name": "f327befe-2e73-4403-bc12-d398125820bb:panel_f327befe-2e73-4403-bc12-d398125820bb",
+      "type": "search"
+     },
+     {
+      "id": "cb38ef62-955a-4a78-9b84-8f795f3e0242",
+      "name": "controlGroup_487954db-d242-4dfd-8d52-36d5d23301bc:optionsListDataView",
+      "type": "index-pattern"
+     }
+    ],
+    "sort": [
+     1663243906029,
+     1288
+    ],
+    "type": "dashboard",
+    "updated_at": "2022-09-15T12:11:46.029Z",
+    "version": "WzE3OTMyLDFd"
+   }
+  ]
+ }

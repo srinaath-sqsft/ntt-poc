@@ -1,0 +1,99 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-node
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: frontend-node
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-node
+  template:
+    metadata:
+      labels:
+        app: frontend-node
+      annotations:
+        co.elastic.monitor/type: tcp
+        co.elastic.monitor/name: frontend-node-{{ .Values.username }}
+        co.elastic.monitor/hosts: ${data.host}:3000
+        co.elastic.monitor/schedule: "@every 10s"
+        co.elastic.monitor/timeout: 1s
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.target: "service"
+        co.elastic.logs/processors.add_fields.fields.name: "frontend-node"
+        eden.core_infra: "true"
+    spec:
+      {{- template "affinity" . }}
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      containers:
+      - name: frontend-node
+        image: docker.elastic.co/sa/{{ .Chart.Name }}-frontend-node:{{ .Values.es_version }}-{{ .Values.build_num }}
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          tcpSocket:
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          limits:
+           cpu: 500m
+           memory: 100Mi
+          requests:
+           cpu: 10m
+           memory: 50Mi
+        env:
+        - name: PORT
+          value: "3000"
+        - name: ELASTIC_APM_CAPTURE_BODY
+          value: "all"
+        - name: ELASTIC_APM_SERVICE_VERSION
+          value: "1.6"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: "frontend-node"
+        - name: ADVERTSERVICE
+          value: "advertservice:10000"
+        - name: CURRENCY_SERVICE_ADDR
+          value: "currencyservice:6000"
+        - name: CARTSERVICE
+          value: "cartservice:11000"
+        - name: PRODUCTCATALOGSERVICE
+          value: "productcatalogservice:9000"
+        - name: FRONTEND_NODE
+          value: frontend-node-{{ .Values.deploy_num }}
+        - name: SHIPPING_SERVICE_ADDR
+          value: "shippingservice:7000"
+        - name: RECOMMENDATIONSERVICE
+          value: "recommendationservice:3000"
+        - name: CHECKOUTSERVICE
+          value: "checkoutservice:8000"
+        - name: ELASTIC_APM_SERVER_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_URL
+        - name: ELASTIC_APM_SECRET_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_SECRET_TOKEN
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-node-{{ .Values.deploy_num }}
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: frontend-node
+spec:
+  ports:
+  - port: 3000
+    targetPort: 3000
+  selector:
+    app: frontend-node

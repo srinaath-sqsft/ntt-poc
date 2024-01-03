@@ -1,0 +1,16 @@
+{
+ "description": "Time shifts data by X for a field Y",
+ "processors": [
+  {
+   "script": {
+    "lang": "painless",
+    "params": {
+     "date_format": "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+     "field": "@timestamp",
+     "time_shift_seconds": -13305600
+    },
+    "source": "if (ctx[params.field] != null) { def formatter = DateTimeFormatter.ofPattern(params.date_format); def current_time = ZonedDateTime.parse(ctx[params.field]); current_time = current_time.plusSeconds(params.time_shift_seconds);  ctx[params.field] = current_time.format(formatter);  }"
+   }
+  }
+ ]
+}

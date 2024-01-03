@@ -1,0 +1,10 @@
+heartbeat:
+  - location: 35.6762, 139.6503
+    name: tokyo
+    datacenter: tokyo-gcp-asia-northeast1
+  - name: london
+    location: 51.5074, 0.1278
+    datacenter: london-gcp-europe-west2
+
+environment_type: prod
+environment: prod

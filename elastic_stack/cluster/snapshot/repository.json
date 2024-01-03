@@ -1,0 +1,5 @@
+{
+  "base_path": "workplace_search",
+  "bucket": "eden-snapshots",
+  "readonly": true
+}

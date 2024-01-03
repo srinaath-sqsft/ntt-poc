@@ -1,0 +1,21 @@
+{
+  "name": "frontend-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@grpc/proto-loader": "^0.5.5",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "elastic-apm-node": "^3.9.0",
+    "express": "^4.17.1",
+    "grpc": "^1.24.4",
+    "lowdb": "1.0.0",
+    "pino": "^5.6.2",
+    "request": "^2.88.2"
+  }
+}

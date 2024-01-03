@@ -1,0 +1,53 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Chart.Name }}-{{ .Values.username }}-frontend-node
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: frontend-node-{{ .Values.deploy_num }}.{{ .Chart.Name }}-{{ .Values.username }}.svc.cluster.local
+  ports:
+  - port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}-{{ .Values.username }}-frontend-node-okta
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/auth-signin: "https://okta-proxy.{{ .Values.environment }}.eden.elastic.dev/login?url=$scheme://$http_host$request_uri&vouch-failcount=$auth_resp_failcount&X-Vouch-Token=$auth_resp_jwt&error=$auth_resp_err"
+    nginx.ingress.kubernetes.io/auth-url: "https://okta-proxy.{{ .Values.environment }}.eden.elastic.dev/validate"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Referer,User-Agent"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{ .Chart.Name }}-{{ .Values.deploy_num }}-node.{{ .Values.environment }}.eden.elastic.dev"
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Vouch-User
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      # these return values are used by the @error401 call
+      auth_request_set $auth_resp_jwt $upstream_http_x_vouch_jwt;
+      auth_request_set $auth_resp_err $upstream_http_x_vouch_err;
+      auth_request_set $auth_resp_failcount $upstream_http_x_vouch_failcount;
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # set User request header
+      proxy_set_header X-Forwarded-User $authHeader0;
+    nginx.ingress.kubernetes.io/server-snippet: |
+      set $http_x_forwarded_demo_name unified-node;
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  tls:
+  - hosts:
+    - '{{ .Chart.Name }}-{{ .Values.deploy_num }}-node.{{ .Values.environment }}.eden.elastic.dev'
+    secretName: wildcard-{{ .Values.environment }}-eden-elastic-dev
+  rules:
+  - host: {{ .Chart.Name }}-{{ .Values.deploy_num }}-node.{{ .Values.environment }}.eden.elastic.dev
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .Chart.Name }}-{{ .Values.username }}-frontend-node
+            port: 
+              number: 3000

@@ -1,0 +1,326 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-ecom
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: frontend-ecom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-ecom
+  template:
+    metadata:
+      labels:
+        app: frontend-ecom
+      annotations:
+        co.elastic.monitor/type: tcp
+        co.elastic.monitor/name: frontend-ecom-{{ .Values.username }}
+        co.elastic.monitor/hosts: ${data.host}:9000
+        co.elastic.monitor/schedule: "@every 10s"
+        co.elastic.monitor/timeout: 1s
+        co.elastic.logs/enabled: "true"
+        co.elastic.logs/json.keys_under_root: "true"
+        co.elastic.logs/processors.add_fields.target: "service"
+        co.elastic.logs/processors.add_fields.fields.name: "frontend-ecom"
+        eden.core_infra: "true"
+    spec:
+      {{- template "affinity" . }}
+      volumes:
+        - name: is-enterprise-search-alive
+          configMap:
+            defaultMode: 0777
+            name: is-enterprise-search-alive
+        - name: ecom-config
+          configMap:
+            defaultMode: 0600
+            name: ecom-configmap
+        - name: create-users-config
+          configMap:
+            defaultMode: 0777
+            name: create-users-config
+      imagePullSecrets:
+        - name: elastic-prod-registry
+      initContainers:
+        - name: enterprise-search-ready
+          image: curlimages/curl
+          command: ['sh', '-c','/etc/is_ent_search_alive.sh']
+          volumeMounts:
+            - name: is-enterprise-search-alive
+              mountPath: /etc/is_ent_search_alive.sh
+              readOnly: true
+              subPath: is_ent_search_alive.sh
+          env:
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}-es-creds
+                  key: ELASTICSEARCH_PASSWORD
+            - name: ENTSEARCH_URL
+              valueFrom:
+                secretKeyRef:
+                  name: entsearch-{{ .Chart.Name }}
+                  key: ENTSEARCH_URL
+            - name: ELASTICSEARCH_USERNAME
+              value: "admin"
+        - name: set-user
+          image: curlimages/curl
+          command: ['sh', '-c','/etc/create_users.sh']
+          volumeMounts:
+          - name: create-users-config
+            mountPath: /etc/create_users.sh
+            readOnly: true
+            subPath: create_users.sh
+          env:
+          - name: ELASTICSEARCH_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}-es-creds
+                key: ELASTICSEARCH_URL
+          - name: ELASTICSEARCH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}-es-creds
+                key: ELASTICSEARCH_PASSWORD
+          - name: EMILIO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ent-search-secrets-{{ .Chart.Name }}
+                key: EMILIO_PASSWORD
+        - name: seed-data
+          image: docker.elastic.co/sa/unified-ecom-frontend-ecom:{{ .Values.es_version }}-{{ .Values.build_num }}
+          command: ["/bin/bash","./scripts/setup.sh"]
+          env:
+            - name: ENGINE_NAME
+              value: "ecommerce"
+            - name: AS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ent-search-secrets-{{ .Chart.Name }}
+                  key: EMILIO_PASSWORD
+            - name: AS_USERNAME
+              value: "emilio"
+            - name: AS_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: entsearch-{{ .Chart.Name }}
+                  key: ENTSEARCH_URL
+            - name: AS_CREDS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: entsearch-{{ .Chart.Name }}
+                  key: ENTSEARCH_URL
+        - name: configure-relevancy
+          image: docker.elastic.co/sa/unified-ecom-frontend-ecom:{{ .Values.es_version }}-{{ .Values.build_num }}
+          command: ["/bin/bash","./scripts/configure-relevancy.sh"]
+          env:
+            - name: ENGINE_NAME
+              value: "ecommerce"
+            - name: AS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ent-search-secrets-{{ .Chart.Name }}
+                  key: EMILIO_PASSWORD
+            - name: AS_USERNAME
+              value: "emilio"
+            - name: AS_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: entsearch-{{ .Chart.Name }}
+                  key: ENTSEARCH_URL
+            - name: AS_CREDS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: entsearch-{{ .Chart.Name }}
+                  key: ENTSEARCH_URL
+        - name: load-analytics
+          image: docker.elastic.co/sa/unified-ecom-analytics-loader:{{ .Values.es_version }}-{{ .Values.build_num }}
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 2000Mi
+            requests:
+             cpu: 40m
+             memory: 120Mi
+          env:
+          - name: ELASTICSEARCH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}-es-creds
+                key: ELASTICSEARCH_PASSWORD
+          - name: ELASTICSEARCH_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}-es-creds
+                key: ELASTICSEARCH_URL
+          - name: INDEX_PATTERN
+            value: "logs-app_search.analytics-default"
+          - name: DATA_FOLDER
+            value: "/opt/ecommerce-analytics"
+          - name: DATE_PATTERN
+            value: "%Y-%m-%dT%H:%M:%S.%f%z"
+          - name: FILL_FORWARD
+            value: "true"
+          - name: ENGINE_NAME
+            value: "ecommerce"
+        - name: load-logs
+          image: docker.elastic.co/sa/unified-ecom-analytics-loader:{{ .Values.es_version }}-{{ .Values.build_num }}
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 2000Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          env:
+          - name: ELASTICSEARCH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}-es-creds
+                key: ELASTICSEARCH_PASSWORD
+          - name: ELASTICSEARCH_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}-es-creds
+                key: ELASTICSEARCH_URL
+          - name: INDEX_PATTERN
+            value: "logs-enterprise_search.api-default"
+          - name: DATA_FOLDER
+            value: "/opt/ecommerce-logs"
+          - name: DATE_PATTERN
+            value: "%Y-%m-%dT%H:%M:%S.%f%z"
+          - name: FILL_FORWARD
+            value: "true"
+          - name: ENGINE_NAME
+            value: "ecommerce"
+      containers:
+      - name: frontend-ecom
+        image: docker.elastic.co/sa/unified-ecom-frontend-ecom:{{ .Values.es_version }}-{{ .Values.build_num }}
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          httpGet:
+            port: 9000
+            path: /
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          limits:
+           cpu: 2000m
+           memory: 2000Mi
+          requests:
+           cpu: 200m
+           memory: 200Mi
+        env:
+        - name: ELASTIC_APM_SERVICE_VERSION
+          value: "1.6"
+        - name: GATSBY_API_URL
+          value: {{ .Chart.Name }}-{{ .Values.deploy_num }}-node.{{ .Values.environment }}.eden.elastic.dev
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: frontend-ecom-{{ .Values.deploy_num }}
+        - name: GATSBY_ELASTIC_APM_SERVER_URLS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-apm-creds
+              key: APM_URL
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: "prod"
+        - name: PRODUCT_ENGINE_NAME
+          value: "ecommerce"
+        - name: KB_ENGINE_NAME
+          value: "help-center"
+        - name: KB_URL
+          value: https://{{ .Chart.Name }}-{{ .Values.deploy_num }}-kb.{{ .Values.environment }}.eden.elastic.dev
+        - name: AS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ent-search-secrets-{{ .Chart.Name }}
+              key: EMILIO_PASSWORD
+        - name: AS_USERNAME
+          value: "emilio"
+        - name: AS_BASE_URL
+          valueFrom:
+              secretKeyRef:
+                name: entsearch-{{ .Chart.Name }}
+                key: ENTSEARCH_URL
+        - name: AS_CREDS_URL
+          valueFrom:
+            secretKeyRef:
+              name: entsearch-{{ .Chart.Name }}
+              key: ENTSEARCH_URL
+        volumeMounts:
+        - name: ecom-config
+          mountPath: /usr/src/eas-ecom-demo/.env.production
+          readOnly: true
+          subPath: env
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecom-configmap
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+data:
+  env: |-
+    GATSBY_ELASTIC_APM_SERVER_URLS=test12345
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-ecom-{{ .Values.deploy_num }}
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+  labels:
+    app: frontend-ecom
+spec:
+  ports:
+  - port: 80
+    targetPort: 9000
+  selector:
+    app: frontend-ecom
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: create-users-config
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+data:
+  create_users.sh: |-
+      echo "Waiting for yellow cluster status"
+      MAX_ATTEMPTS=50
+      until $(curl -o /dev/null -f -s -S -u "elastic:${ELASTICSEARCH_PASSWORD}" ${ELASTICSEARCH_URL}/_cluster/health?wait_for_status=yellow); do
+        echo retrying...;
+        sleep 5;
+        count=`expr $count + 1`;
+        if [ $count -gt $MAX_ATTEMPTS ]; then
+          echo "Max Attempts reached"
+          exit 1
+        fi
+      done
+      echo ""
+      echo "Creating User Emilio"
+      curl -v -XPOST -u elastic:${ELASTICSEARCH_PASSWORD} ${ELASTICSEARCH_URL}/_security/user/emilio -H "Content-Type: application/json" -d '{  "password" :  "'"${EMILIO_PASSWORD}"'",  "roles" : ["superuser"],  "full_name" : "emilio",  "email" : "emilio@acme.co",  "metadata" : {  }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: is-enterprise-search-alive
+  namespace: {{ .Chart.Name }}-{{ .Values.username }}
+data:
+  is_alive.sh: |-
+      #!/bin/sh
+      curl -o /dev/null -f -s -u "${ELASTICSEARCH_USERNAME}:${ELASTICSEARCH_PASSWORD}" -XGET ${ENTSEARCH_URL}/api/ent/v1/internal/health
+  is_ent_search_alive.sh: |-
+      #!/bin/sh
+      echo "Waiting for enterprise search, check 1"
+      until $(curl -o /dev/null -f -s -u "${ELASTICSEARCH_USERNAME}:${ELASTICSEARCH_PASSWORD}" -XGET ${ENTSEARCH_URL}/api/ent/v1/internal/health); do
+        echo "retrying check 1..."
+        sleep 5;
+      done
+      echo "Enterprise Search is ready!"
+      echo "Waiting for enterprise search, check 2"
+      sleep 5;
+        until $(curl -o /dev/null -f -s -u "${ELASTICSEARCH_USERNAME}:${ELASTICSEARCH_PASSWORD}" -XGET ${ENTSEARCH_URL}/api/ent/v1/internal/health); do
+          echo "retrying check 2..."
+          sleep 5;
+        done
+        echo "Enterprise Search is ready!"

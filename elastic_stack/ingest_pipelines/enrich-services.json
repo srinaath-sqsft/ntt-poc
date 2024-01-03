@@ -1,0 +1,57 @@
+{
+ "processors": [
+  {
+   "script": {
+    "if": "ctx?.log?.level == null",
+    "lang": "painless",
+    "source": "if (ctx.log == null) { ctx.log = [:]; } if (ctx?.severity != null) { ctx.log.level = ctx.severity; } else { ctx.log.level = 'INFO'; }"
+   }
+  },
+  {
+   "script": {
+    "if": "ctx?.message != null;",
+    "lang": "painless",
+    "source": "if (ctx.message.toLowerCase().contains('error')){ctx.log.level = 'ERROR';}"
+   }
+  },
+  {
+   "set": {
+    "field": "message",
+    "if": "ctx['@m'] != null",
+    "override": true,
+    "value": "{{@m}}"
+   }
+  },
+  {
+   "set": {
+    "field": "@timestamp",
+    "if": "ctx['@t'] != null",
+    "override": true,
+    "value": "{{@t}}"
+   }
+  },
+  {
+   "script": {
+    "lang": "painless",
+    "source": "if (ctx['@l'] != null) { ctx.log.level = ctx['@l']; } ctx.log.level = ctx.log.level.toUpperCase(); if (ctx['@x'] != null) { ctx.message = ctx.message + ' - ' + ctx['@x']; }"
+   }
+  },
+  {
+   "remove": {
+    "field": [
+     "@i",
+     "@x",
+     "@l"
+    ],
+    "ignore_missing": true
+   }
+  },
+  {
+   "rename": {
+    "field": "_metadata.metadata_event_dataset",
+    "ignore_failure": true,
+    "target_field": "event.dataset"
+   }
+  }
+ ]
+}

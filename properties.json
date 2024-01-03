@@ -1,0 +1,12 @@
+{
+  "build_num": 1,
+  "es_version": "8.11.0",
+  "name": "unified-ecom",
+  "notes": "",
+  "secrets_keys": [
+   "gcs.client.default.credentials_file"
+  ],
+  "custom_cluster_settings": {
+    "enterprise_search": "ent_search.external_url: \"https://unified-ecom-${DEPLOY_NUM}-workplace.${EDEN_ENV}.eden.elastic.dev\"\nworkplace_search.content_source.sync.enabled: false\napm.enabled: true\napm.server_url: \"${APM_URL}\"\napm.secret_token: \"${APM_SECRET_TOKEN}\""
+   }
+ }
