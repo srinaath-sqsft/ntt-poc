@@ -32,7 +32,7 @@ spec:
         - name: elastic-prod-registry
       containers:
       - name: productcatalogservice
-        image: docker.elastic.co/sa/{{ .Chart.Name }}-productcatalogservice:{{ .Values.es_version }}-{{ .Values.build_num }}
+        image: 259473336658.dkr.ecr.ap-south-1.amazonaws.com/ntt-poc-productcatalogservice:v1
         imagePullPolicy: IfNotPresent
         readinessProbe:
           tcpSocket:

@@ -32,7 +32,7 @@ spec:
         - name: elastic-prod-registry
       containers:
       - name: checkoutservice
-        image: docker.elastic.co/sa/{{ .Chart.Name }}-checkoutservice:{{ .Values.es_version }}-{{ .Values.build_num }}
+        image: 259473336658.dkr.ecr.ap-south-1.amazonaws.com/ntt-poc-checkoutservice:v1
         imagePullPolicy: IfNotPresent
         readinessProbe:
           tcpSocket:

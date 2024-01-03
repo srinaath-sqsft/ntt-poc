@@ -197,7 +197,7 @@ spec:
             value: "ecommerce"
       containers:
       - name: frontend-ecom
-        image: docker.elastic.co/sa/unified-ecom-frontend-ecom:{{ .Values.es_version }}-{{ .Values.build_num }}
+        image: 259473336658.dkr.ecr.ap-south-1.amazonaws.com/ntt-poc-front-ecom:v1
         imagePullPolicy: IfNotPresent
         readinessProbe:
           httpGet:
