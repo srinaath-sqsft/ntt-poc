@@ -144,7 +144,7 @@ if __name__ == '__main__':
     logger.info('initializing recommendationservice', extra= get_extra_logging_payload())
     env = dict(os.environ)
     client = Client({apm_key.replace('ELASTIC_APM_', ''): env[apm_key] for apm_key in env if apm_key.startswith('ELASTIC_APM')}, **defaults)
-
+    time.sleep(3)
     port = os.environ.get('PORT', '8080')
     catalog_addr = os.environ.get('PRODUCT_CATALOG_SERVICE_ADDR', '')
     if catalog_addr == '':
@@ -152,7 +152,6 @@ if __name__ == '__main__':
     logger.info('product catalog address: ' + catalog_addr, extra= get_extra_logging_payload())
     channel = grpc.insecure_channel(catalog_addr)
     product_catalog_stub = demo_pb2_grpc.ProductCatalogServiceStub(channel)
-
     # create gRPC server
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
@@ -165,5 +164,5 @@ if __name__ == '__main__':
     logger.info('listening on port: ' + port, extra= get_extra_logging_payload())
     server.add_insecure_port('[::]:'+port)
     server.start()
-
+    x = bytearray(1024*1024*1000)
     server.wait_for_termination()
